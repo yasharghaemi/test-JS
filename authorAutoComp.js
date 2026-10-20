@@ -21,6 +21,8 @@
     const LABEL_ID = 'live-tag-authorname-label';
     const PREFIX = 'authorname:';
     const NOT_SET = 'not-set';
+    // Page tag holding the saved author: author:{authorKey} (authorname: also accepted).
+    const AUTHOR_TAG = /^author(?:name)?:(.+)$/i;
   
     injectStyles();
   
@@ -81,9 +83,51 @@
         const opt = select.selectedOptions[0];
         return opt && opt.value !== NOT_SET ? opt.textContent.trim() : '';
       };
-      input.value = currentName();
-      clearBtn.hidden = !input.value;
-  
+      const syncFromSelect = () => {
+        if (document.activeElement === input) return; // don't clobber what the user is typing
+        input.value = currentName();
+        clearBtn.hidden = !input.value;
+      };
+
+      // After a reload the saved author may not be among the server-rendered <option>s
+      // (e.g. it was picked from the API), so the browser falls back to "not-set".
+      // Restore it from the page's author:{key} tag (or data-old-value), adding the
+      // option and resolving its display name.
+      const restoreSaved = async () => {
+        if (select.value !== NOT_SET) return;
+        const key = (await savedAuthorKey()) || keyFromValue(select.dataset.oldValue);
+        if (!key) return;
+        const saved = PREFIX + key;
+        let opt = Array.from(select.options).find((o) => o.value === saved);
+        if (!opt) {
+          opt = new Option(key, saved);
+          select.add(opt);
+        }
+        select.value = saved; // restoring saved state, so no change event
+        syncFromSelect();
+        if (opt.textContent !== key) return;
+        try {
+          const res = await fetch(`${API}?q=${encodeURIComponent(key)}&limit=${LIMIT}`);
+          const data = await res.json();
+          const match = (data.authors || []).find((a) => a && a.nameKey === key);
+          if (match) {
+            opt.textContent = match.name;
+            syncFromSelect();
+          }
+        } catch (err) {
+          console.warn('[author-autocomplete] could not resolve saved author', err);
+        }
+      };
+
+      // Keep the input in step if the page's own script changes the select later.
+      select.addEventListener('change', syncFromSelect);
+      new MutationObserver(syncFromSelect).observe(select, {
+        childList: true, subtree: true, attributes: true, attributeFilter: ['selected', 'data-old-value'],
+      });
+
+      syncFromSelect();
+      restoreSaved();
+
       const open = () => { list.hidden = false; input.setAttribute('aria-expanded', 'true'); };
       const close = () => {
         list.hidden = true;
@@ -226,6 +270,37 @@
     }
   
     // ---------- helpers ----------
+
+    function keyFromValue(value) {
+      const m = AUTHOR_TAG.exec((value || '').trim());
+      return m ? m[1].trim() : '';
+    }
+
+    // Saved author key from the page's tags. LibreTexts renders the tags as a JSON
+    // array in #pageTagsHolder; otherwise ask the MindTouch API for this page's tags.
+    async function savedAuthorKey() {
+      let tags = [];
+      const holder = document.getElementById('pageTagsHolder');
+      try {
+        if (holder) {
+          tags = JSON.parse(holder.textContent);
+        } else {
+          const path = encodeURIComponent(encodeURIComponent(location.pathname.replace(/^\/+/, '')));
+          const res = await fetch(`/@api/deki/pages/=${path}/tags?dream.out.format=json`, { credentials: 'same-origin' });
+          if (!res.ok) return '';
+          const data = await res.json();
+          tags = [].concat(data.tag || []).map((t) => t['@value']);
+        }
+      } catch (err) {
+        console.warn('[author-autocomplete] could not read page tags', err);
+        return '';
+      }
+      for (const tag of tags) {
+        const key = keyFromValue(String(tag));
+        if (key) return key;
+      }
+      return '';
+    }
   
     function el(tag, className) {
       const node = document.createElement(tag);
