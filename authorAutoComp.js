@@ -1,0 +1,265 @@
+/**
+ * Author autocomplete for the LibreTexts Page Settings "live tag" Author field.
+ *
+ * Replaces the visible <select id="live-tag-authorname-select"> with a searchable
+ * combobox backed by the authors API. The original <select> stays in the DOM
+ * (hidden) and remains the source of truth, so the existing live-tag save logic
+ * keeps working: picking an author sets select.value to "authorname:<nameKey>"
+ * (adding the <option> if it isn't already in the list) and fires "change".
+ *
+ * API: GET https://knitcanvas.fun/api/v1/authors/search?q=<query>&limit=<n>
+ *   -> { err: false, authors: [{ nameKey, name, nameURL, campusName, isGroup }] }
+ */
+(function () {
+    'use strict';
+  
+    const API = 'https://knitcanvas.fun/api/v1/authors/search';
+    const LIMIT = 10;
+    const MIN_CHARS = 2;
+    const DEBOUNCE_MS = 250;
+    const SELECT_ID = 'live-tag-authorname-select';
+    const LABEL_ID = 'live-tag-authorname-label';
+    const PREFIX = 'authorname:';
+    const NOT_SET = 'not-set';
+  
+    injectStyles();
+  
+    // The settings dialog is rendered on demand, so watch for the select to appear
+    // (and re-appear, if the dialog is closed and reopened).
+    const tryMount = () => {
+      const select = document.getElementById(SELECT_ID);
+      if (select && !select.dataset.aaMounted) mount(select);
+    };
+    new MutationObserver(tryMount).observe(document.body, { childList: true, subtree: true });
+    tryMount();
+  
+    function mount(select) {
+      select.dataset.aaMounted = 'true';
+      const section = select.closest('.live-tag-special-section') || select.parentElement;
+  
+      // Hide the native control but keep it in the form.
+      select.style.display = 'none';
+      select.setAttribute('aria-hidden', 'true');
+      select.tabIndex = -1;
+      const arrow = section.querySelector('.mt-select-box-arrow');
+      if (arrow) arrow.style.display = 'none';
+  
+      const listId = SELECT_ID + '-aa-list';
+  
+      const wrap = el('div', 'aa-wrap');
+      const input = el('input', 'aa-input mt-input');
+      Object.assign(input, { type: 'text', autocomplete: 'off', spellcheck: false, placeholder: 'Search authors…' });
+      setAttrs(input, {
+        role: 'combobox',
+        'aria-autocomplete': 'list',
+        'aria-expanded': 'false',
+        'aria-controls': listId,
+        'aria-labelledby': LABEL_ID,
+      });
+  
+      const clearBtn = el('button', 'aa-clear');
+      clearBtn.type = 'button';
+      clearBtn.textContent = '×';
+      clearBtn.setAttribute('aria-label', 'Clear author');
+  
+      const list = el('ul', 'aa-list');
+      list.id = listId;
+      list.setAttribute('role', 'listbox');
+      list.hidden = true;
+  
+      const status = el('div', 'aa-sr-only');
+      status.setAttribute('aria-live', 'polite');
+  
+      wrap.append(input, clearBtn, list, status);
+      select.insertAdjacentElement('afterend', wrap);
+  
+      let results = [];
+      let active = -1;
+      let controller = null;
+  
+      const currentName = () => {
+        const opt = select.selectedOptions[0];
+        return opt && opt.value !== NOT_SET ? opt.textContent.trim() : '';
+      };
+      input.value = currentName();
+      clearBtn.hidden = !input.value;
+  
+      const open = () => { list.hidden = false; input.setAttribute('aria-expanded', 'true'); };
+      const close = () => {
+        list.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        active = -1;
+      };
+  
+      const message = (text) => {
+        list.replaceChildren(Object.assign(el('li', 'aa-msg'), { textContent: text }));
+        status.textContent = text;
+        open();
+      };
+  
+      const renderList = () => {
+        if (!results.length) return message('No authors found');
+        list.replaceChildren(...results.map((a, i) => {
+          const li = el('li', 'aa-option');
+          li.id = `${listId}-opt-${i}`;
+          li.setAttribute('role', 'option');
+          li.setAttribute('aria-selected', 'false');
+          const name = el('span', 'aa-name');
+          name.textContent = a.name + (a.isGroup ? ' (group)' : '');
+          li.append(name);
+          if (a.campusName) {
+            const campus = el('span', 'aa-campus');
+            campus.textContent = a.campusName;
+            li.append(campus);
+          }
+          // mousedown + preventDefault keeps focus in the input so blur doesn't close first
+          li.addEventListener('mousedown', (e) => { e.preventDefault(); choose(results[i]); });
+          return li;
+        }));
+        status.textContent = `${results.length} author${results.length === 1 ? '' : 's'} found`;
+        open();
+      };
+  
+      const setActive = (i) => {
+        const opts = list.querySelectorAll('.aa-option');
+        if (!opts.length) return;
+        active = (i + opts.length) % opts.length;
+        opts.forEach((o, j) => {
+          o.classList.toggle('aa-active', j === active);
+          o.setAttribute('aria-selected', String(j === active));
+        });
+        input.setAttribute('aria-activedescendant', opts[active].id);
+        opts[active].scrollIntoView({ block: 'nearest' });
+      };
+  
+      const setSelectValue = (value) => {
+        select.value = value;
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+  
+      function choose(author) {
+        const value = PREFIX + author.nameKey;
+        let opt = Array.from(select.options).find((o) => o.value === value);
+        if (!opt) {
+          opt = new Option(author.name, value);
+          select.add(opt);
+        }
+        setSelectValue(value);
+        input.value = author.name;
+        clearBtn.hidden = false;
+        close();
+      }
+  
+      const search = debounce(async (q) => {
+        if (controller) controller.abort();
+        controller = new AbortController();
+        message('Searching…');
+        try {
+          const res = await fetch(`${API}?q=${encodeURIComponent(q)}&limit=${LIMIT}`, { signal: controller.signal });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          if (data.err) throw new Error('API returned err');
+          results = Array.isArray(data.authors) ? data.authors.filter((a) => a && a.nameKey) : [];
+          renderList();
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          console.warn('[author-autocomplete]', err);
+          message('Could not load authors. Try again.');
+        }
+      }, DEBOUNCE_MS);
+  
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        clearBtn.hidden = !input.value;
+        if (q.length < MIN_CHARS) {
+          if (controller) controller.abort();
+          results = [];
+          close();
+          return;
+        }
+        search(q);
+      });
+  
+      input.addEventListener('keydown', (e) => {
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (list.hidden && results.length) renderList();
+            setActive(active + 1);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            setActive(active - 1);
+            break;
+          case 'Enter':
+            // never let Enter submit the settings form from this field
+            e.preventDefault();
+            if (!list.hidden && active >= 0 && results[active]) choose(results[active]);
+            break;
+          case 'Escape':
+            if (!list.hidden) {
+              e.preventDefault();
+              e.stopPropagation(); // close the list, not the whole dialog
+              close();
+            }
+            break;
+        }
+      });
+  
+      input.addEventListener('blur', () => {
+        close();
+        // Don't leave half-typed text that looks like a saved value.
+        input.value = currentName();
+        clearBtn.hidden = !input.value;
+      });
+  
+      clearBtn.addEventListener('click', () => {
+        setSelectValue(NOT_SET);
+        input.value = '';
+        clearBtn.hidden = true;
+        results = [];
+        close();
+        input.focus();
+      });
+    }
+  
+    // ---------- helpers ----------
+  
+    function el(tag, className) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      return node;
+    }
+  
+    function setAttrs(node, attrs) {
+      Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+    }
+  
+    function debounce(fn, ms) {
+      let t;
+      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    }
+  
+    function injectStyles() {
+      if (document.getElementById('aa-styles')) return;
+      const style = document.createElement('style');
+      style.id = 'aa-styles';
+      style.textContent = `
+        .aa-wrap { position: relative; width: 100%; }
+        .aa-input { width: 100%; box-sizing: border-box; padding: 6px 28px 6px 8px; }
+        .aa-clear { position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+                    border: 0; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #666; }
+        .aa-list { position: absolute; z-index: 100000; left: 0; right: 0; margin: 2px 0 0; padding: 0;
+                   list-style: none; max-height: 260px; overflow-y: auto; background: #fff;
+                   border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+        .aa-option { padding: 6px 10px; cursor: pointer; display: flex; flex-direction: column; }
+        .aa-option:hover, .aa-option.aa-active { background: #e8f0fe; }
+        .aa-campus { font-size: 12px; color: #666; }
+        .aa-msg { padding: 6px 10px; color: #666; font-style: italic; }
+        .aa-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      `;
+      document.head.appendChild(style);
+    }
+  })();
