@@ -28,8 +28,7 @@
       options: [
         ["article:topic", "Topic"],
         ["article:topic-guide", "Guide"],
-        ["article:topic-category", "Category"],
-        ["article:topic-portal", "Portal"]
+        ["article:topic-category", "Category"]
       ]
     },
     role("Author", "author@"),

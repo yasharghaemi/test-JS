@@ -39,7 +39,7 @@ export const FIELDS: FieldConfig[] = [
   {
     label: 'Article type', prefix: 'article:', options: [
       ['article:topic', 'Topic'], ['article:topic-guide', 'Guide'],
-      ['article:topic-category', 'Category'], ['article:topic-portal', 'Portal'],
+      ['article:topic-category', 'Category'],
     ],
   },
   role('Author', 'author@'),
