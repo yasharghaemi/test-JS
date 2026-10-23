@@ -7,13 +7,40 @@
 </head>
 <body>
     <!-- What the PageSettings DekiScript template outputs. -->
-    <div id="cps-data" style="display:none">{"pageId":123,"apiUrl":"/@api/deki/pages/123","summary":"Some summary","thumbnail":"","tags":["article:topic-guide","author:libretexts","author@yashar-ghaemi","contributor@jake-turner","editor@yashar-ghaemi","license:ccbysa","licenseversion:40","remixer@yashar-ghaemi","reviewedBy@delmar"]}</div>
+    <div id="cps-data" style="display:none">{"pageId":123,"apiUrl":"/@api/deki/pages/123","summary":"Some summary","thumbnail":"","tags":["article:topic-guide","author:libretexts","author@yashar-ghaemi","author@second-author","contributor@jake-turner","editor@yashar-ghaemi","license:ccbysa","licenseversion:40","remixer@yashar-ghaemi","reviewedBy@delmar"]}</div>
 
     <!-- Stand-in for MindTouch's built-in panel; pagesetting.js replaces it. -->
-    <div id="mt-summary">
-        
-    </div>
+    <div id="mt-summary"></div>
 
-    <script src="./pagesetting.js"></script>
+    <script>
+        // Demo only: a fake MindTouch API so saving and "apply to subpages" can be
+        // tried locally. Page 123 has three subpages; every call is logged.
+        (function () {
+            const realFetch = window.fetch.bind(window);
+            const tags = { 124: ['author@libretexts', 'license:ccby'], 125: [], 126: ['author@someone-else'] };
+            const json = (body) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            window.fetch = async (url, init = {}) => {
+                const u = String(url);
+                if (!u.startsWith('/@api/deki')) return realFetch(url, init);
+                const method = init.method || 'GET';
+                console.log('[demo api]', method, u, init.body || '');
+                await new Promise((r) => setTimeout(r, 150));
+                if (/\/pages\/123\/tree/.test(u)) {
+                    return json({ page: { '@id': '123', subpages: { page: [
+                        { '@id': '124', subpages: { page: { '@id': '126' } } },
+                        { '@id': '125' },
+                    ] } } });
+                }
+                const m = u.match(/\/pages\/(\d+)\/tags/);
+                if (m && method === 'GET') return json({ tag: (tags[m[1]] || []).map((v) => ({ '@value': v })) });
+                if (m && method === 'PUT') {
+                    tags[m[1]] = [...String(init.body).matchAll(/value="([^"]*)"/g)].map((x) => x[1]);
+                    console.log('[demo api] page', m[1], 'tags now', tags[m[1]]);
+                }
+                return new Response('', { status: 200 });
+            };
+        })();
+    </script>
+    <script src="./dist/pagesetting.js"></script>
 </body>
 </html>

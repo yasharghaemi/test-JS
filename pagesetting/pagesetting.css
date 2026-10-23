@@ -87,6 +87,30 @@
 .cps-fields { display: flex; flex-wrap: wrap; gap: 16px 26px; }
 .cps-field { flex: 0 1 298px; min-width: 200px; }
 
+/* Attribution Manager: foldable, one row per role (label left, person right) */
+.cps-attribution {
+  border: 1px solid var(--cps-border); border-radius: 3px; background: var(--cps-surface);
+}
+.cps-attribution-summary {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; font-size: 17px; cursor: pointer; list-style: none;
+}
+.cps-attribution-summary::-webkit-details-marker { display: none; }
+.cps-attribution-summary::before {
+  content: '+'; width: 12px; color: var(--cps-muted); font-size: 18px; line-height: 1;
+}
+.cps-attribution[open] > .cps-attribution-summary::before { content: '−'; }
+.cps-attribution-count { color: var(--cps-muted); font-size: 14px; }
+.cps-roles {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 4px 14px 14px; max-width: 620px;
+}
+.cps-roles .cps-field {
+  display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: 12px;
+  min-width: 0;
+}
+.cps-roles .cps-heading { margin: 0; padding: 0; font-size: 15px; }
+
 .cps-select,
 .cps-input,
 .cps-tag-input {
@@ -143,6 +167,26 @@
 .cps-panel select:focus-visible,
 .cps-panel textarea:focus-visible { outline: 2px solid var(--cps-accent); outline-offset: 1px; }
 
+/* "apply to subpages" dialog (appended to <body>, outside .cps-panel) */
+.cps-dialog {
+  width: min(440px, calc(100vw - 32px)); padding: 20px 22px;
+  border: 1px solid #c8c8c8; border-radius: 6px;
+  background: #ffffff; color: #222222; font-size: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.cps-dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+.cps-dialog-title { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+.cps-dialog-message { margin: 0 0 20px; line-height: 1.45; }
+.cps-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.cps-btn {
+  padding: 7px 14px; border: 1px solid #c8c8c8; border-radius: 3px;
+  background: #ffffff; color: #222222; font: inherit; font-size: 14px; cursor: pointer;
+}
+.cps-btn:hover { background: #f2f2f2; }
+.cps-btn-primary { border-color: #1e88e5; background: #1e88e5; color: #ffffff; }
+.cps-btn-primary:hover { background: #1976d2; }
+.cps-btn:focus-visible { outline: 2px solid #1e88e5; outline-offset: 2px; }
+
 .cps-sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
@@ -152,4 +196,5 @@
   .cps-top { flex-direction: column; }
   .cps-thumb { flex-basis: auto; width: 148px; }
   .cps-field { flex-basis: 100%; }
+  .cps-roles .cps-field { grid-template-columns: 1fr; gap: 4px; }
 }
