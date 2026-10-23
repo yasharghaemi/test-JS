@@ -14,8 +14,11 @@ this GitHub repo through jsDelivr. There is no server code here.
   - `src/` — sources. `index.ts` mounts the panel; `config.ts` holds `FIELDS` and all
     constants; `api.ts` has every MindTouch API call; `fields/` has one module per
     panel section; `subpages.ts` asks to apply a field change to all subpages.
-  - `dist/pagesetting.js` — build output. **Committed**, because jsDelivr serves it.
-  - `pagesetting.css` — panel styles, served as is (not bundled).
+  - `dist/pagesetting.min.js` (+ `.map`) and `dist/pagesetting.min.css` — minified
+    build output. **Committed**, because jsDelivr serves it.
+  - `pagesetting.css` — panel styles source (minified into `dist/` by the build).
+  - `loader.html` — the only code pasted into the site (Custom HTML): calls the
+    DekiScript template and loads the `dist/` files only once `#mt-summary` appears.
   - `PageSettings.dekiscript` — code for the `Template:Custom/Views/PageSettings`
     template; writes page data as JSON into a hidden `#cps-data` element.
   - `demo.html` — local test page with a fake `/@api/deki` (via a `fetch` override).
@@ -23,19 +26,22 @@ this GitHub repo through jsDelivr. There is no server code here.
 ## Commands (run in `pagesetting/`)
 
 - `npm install` — once, installs esbuild and typescript.
-- `npm run build` — bundles `src/index.ts` to `dist/pagesetting.js` (IIFE, ES2019).
-- `npm run watch` — rebuild on change.
+- `npm run build` — minified, ASCII-only `dist/pagesetting.min.js` (IIFE, ES2019,
+  with source map) and `dist/pagesetting.min.css`.
+- `npm run watch` — rebuild the JS on change.
 - `npm run typecheck` — `tsc --noEmit`.
 
-Always run `npm run typecheck && npm run build` after editing `src/`, and commit the
-updated `dist/pagesetting.js` together with the source change.
+Always run `npm run typecheck && npm run build` after editing `src/` or the CSS, and
+commit the updated `dist/` files together with the source change.
 
 ## Deploying
 
-The site loads files pinned to a commit:
-`https://cdn.jsdelivr.net/gh/yasharghaemi/test-JS@<commit>/pagesetting/dist/pagesetting.js`
-(and `.../pagesetting/pagesetting.css`). After pushing, give the user the new
-commit-pinned URLs; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
+Don't paste the bundle into MindTouch templates (it would ship in every page's HTML
+and pasted text gets mangled). The site has `loader.html` pasted once into Custom
+HTML; it loads
+`https://cdn.jsdelivr.net/gh/yasharghaemi/test-JS@<commit>/pagesetting/dist/pagesetting.min.{js,css}`
+only in the editor. After pushing, tell the user the new commit hash to put in the
+loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
 
 ## Conventions and gotchas
 

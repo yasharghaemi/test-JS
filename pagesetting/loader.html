@@ -1,0 +1,41 @@
+<!--
+  Page settings panel loader: paste this (and only this) into
+  Control Panel > Branding > Custom HTML. Don't paste the bundle itself.
+
+  The JS and CSS are downloaded only when the editor's #mt-summary appears, so
+  normal page views load nothing; the browser caches both files after that.
+  After each push, replace the commit hash in BASE with the new one.
+-->
+<pre class="script">template("Custom/Views/PageSettings");</pre>
+<script>
+(function () {
+  var BASE = 'https://cdn.jsdelivr.net/gh/yasharghaemi/test-JS@COMMIT_HASH/pagesetting/dist/';
+  var loaded = false;
+  function load() {
+    if (loaded) return;
+    loaded = true;
+    var head = document.head;
+    var pre = document.createElement('link');
+    pre.rel = 'preconnect';
+    pre.href = 'https://knitcanvas.fun';
+    pre.crossOrigin = 'anonymous';
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = BASE + 'pagesetting.min.css';
+    var js = document.createElement('script');
+    js.src = BASE + 'pagesetting.min.js';
+    js.async = true;
+    head.appendChild(pre);
+    head.appendChild(css);
+    head.appendChild(js);
+  }
+  if (document.getElementById('mt-summary')) return load();
+  var watch = new MutationObserver(function () {
+    if (document.getElementById('mt-summary')) {
+      watch.disconnect();
+      load();
+    }
+  });
+  watch.observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>

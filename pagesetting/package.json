@@ -4,8 +4,10 @@
   "private": true,
   "description": "Custom Page settings panel for the MindTouch editor",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=iife --target=es2019 --outfile=dist/pagesetting.js",
-    "watch": "npm run build -- --watch",
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "esbuild src/index.ts --bundle --format=iife --target=es2019 --minify --sourcemap --legal-comments=none --outfile=dist/pagesetting.min.js",
+    "build:css": "esbuild pagesetting.css --minify --outfile=dist/pagesetting.min.css",
+    "watch": "esbuild src/index.ts --bundle --format=iife --target=es2019 --sourcemap --outfile=dist/pagesetting.min.js --watch",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
