@@ -1,0 +1,31 @@
+/***
+ * Template:Custom/Views/PageSettings
+ *
+ * Emits the current page's settings as data attributes on a hidden #cps-data
+ * element. pagesetting.js reads it, builds the custom Page settings panel where
+ * #mt-summary was, and removes #mt-summary. Renders nothing visible.
+ *
+ * Create a template page with this code inside a DekiScript block
+ * (<pre class="script">...</pre>), then call it on every page, e.g. from
+ * Control Panel > Branding > Custom HTML:
+ *
+ *     <pre class="script">template("Custom/Views/PageSettings");</pre>
+ ***/
+
+if (!user.anonymous) {
+    // page.tags is a map keyed by tag name on some versions, a list on others.
+    var tagList = page.tags is map ? map.values(page.tags) : (page.tags ?? []);
+    var overview = page.properties["mindtouch.page#overview"];
+    var thumbnail = page.files["mindtouch.page#thumbnail"];
+
+    // DekiScript reads "-" in attribute names as subtraction, so no data-* attributes:
+    // the settings go in as one JSON object in the element's text.
+    var settings = {
+        pageId: page.id,
+        apiUrl: page.api,
+        summary: overview ? overview.text : "",
+        thumbnail: thumbnail ? thumbnail.uri : "",
+        tags: [ t.name foreach var t in tagList ]
+    };
+    <div id="cps-data" style="display:none"> json.emit(settings) </div>
+}
