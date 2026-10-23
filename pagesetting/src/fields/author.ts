@@ -167,9 +167,9 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
 
   return {
     node: labelled(field.label, wrap, id),
-    value: () => value,
+    tags: () => (value ? [value] : []),
     display: () => name,
-    committedValue: () => committed.value,
+    committedTags: () => (committed.value ? [committed.value] : []),
     commit: () => { committed = { value, name }; },
     revert: () => {
       ({ value, name } = committed);

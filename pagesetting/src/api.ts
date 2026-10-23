@@ -49,20 +49,25 @@ export function putTags(pageId: number | string, tags: string[]): Promise<Respon
 }
 
 /**
- * Sets a page's field tag the way the panel would: replaces the first tag with
- * `prefix` by `tag`, adds `tag` if none matched, or removes it when `tag` is ''.
+ * Sets a page's field tags the way the panel would: for each prefix, replaces the
+ * first tag with that prefix by the new tag with that prefix, adds it if none
+ * matched, or removes the old one when `newTags` has none for it.
  */
-export async function replaceFieldTag(pageId: number | string, prefix: string, tag: string): Promise<void> {
+export async function replaceFieldTags(pageId: number | string, prefixes: string[], newTags: string[]): Promise<void> {
   const tags = await getTags(pageId);
-  const i = tags.findIndex((t) => hasPrefix(t, prefix));
-  if (i >= 0) {
-    if (tags[i] === tag) return;
-    if (tag) tags.splice(i, 1, tag); else tags.splice(i, 1);
-  } else {
-    if (!tag) return;
-    tags.push(tag);
+  const next = [...tags];
+  for (const prefix of prefixes) {
+    const tag = newTags.find((t) => hasPrefix(t, prefix)) || '';
+    const i = next.findIndex((t) => hasPrefix(t, prefix));
+    if (i >= 0) {
+      if (tag) next.splice(i, 1, tag); else next.splice(i, 1);
+    } else if (tag) {
+      next.push(tag);
+    }
   }
-  await putTags(pageId, [...new Set(tags)]);
+  const result = [...new Set(next)];
+  if (result.length === tags.length && result.every((t, i) => t === tags[i])) return;
+  await putTags(pageId, result);
 }
 
 // Updating an existing property needs its current ETag; a new one doesn't.

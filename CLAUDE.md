@@ -48,6 +48,16 @@ commit-pinned URLs; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h
   `prefix` (prefix includes the separator, e.g. `article:`, `author@`). Other tags
   matching the prefix stay in the free tag list. Author is stored as
   `author@<nameKey>`; older `author:` / `authorname:` tags are shown as plain tags.
+- **Foldable sections** come from `GROUPS` in `config.ts` (`<details class="cps-group">`,
+  closed at first; header shows a count or the chosen values). A field joins one via
+  `group: '<id>'`.
+- **License** section: one `type: 'license'` field (`fields/license.ts`) that owns two
+  tags, `license:<key>` and `licenseversion:<key>` (e.g. `license:ccbysa`,
+  `licenseversion:40`). `LICENSES` in `config.ts` (from the site's own list) defines
+  each license and the versions it allows; the version dropdown only offers those, and
+  changing the license keeps a still-valid version or picks the newest. Fields can own
+  several tags: `FieldControl.tags()/committedTags()` return arrays and
+  `fieldPrefixes(field)` lists every prefix a field owns.
 - **Attribution Manager** (foldable `<details>`, starts closed): one person per role,
   stored as `author@`, `editor@`, `remixer@`, `translator@`, `contributor@`,
   `illustrator@`, `reviewedBy@` (Reviewer) + `<nameKey>`. Roles are `FIELDS` entries

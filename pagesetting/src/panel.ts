@@ -1,7 +1,8 @@
 import { putTags } from './api';
-import { ARTICLE_PREFIX, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig } from './config';
+import { ARTICLE_PREFIX, GROUPS, fieldPrefixes, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
 import { el, radio } from './dom';
 import { authorField } from './fields/author';
+import { licenseField } from './fields/license';
 import { selectField } from './fields/select';
 import { summaryField } from './fields/summary';
 import { tagsField } from './fields/tags';
@@ -9,6 +10,21 @@ import { thumbnailField } from './fields/thumbnail';
 import { applyToSubpages, confirmFieldChange } from './subpages';
 import type { FieldControl, PageData, Save, SaveResult, SetStatus } from './types';
 import { debounce, hasPrefix } from './util';
+
+interface FieldState {
+  field: FieldConfig;
+  /** The tags the field held when the panel opened. */
+  current: string[];
+  control: FieldControl;
+}
+
+interface Group {
+  config: GroupConfig;
+  details: HTMLDetailsElement;
+  info: HTMLSpanElement;
+  grid: HTMLDivElement;
+  states: FieldState[];
+}
 
 export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
   const panel = el('section', 'cps-panel');
@@ -69,20 +85,24 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
 
   const row = el('div', 'cps-fields');
 
-  // Foldable Attribution Manager; starts closed and shows how many roles are set.
-  const attribution = el('details', 'cps-attribution');
-  const attributionSummary = el('summary', 'cps-attribution-summary');
-  const attributionCount = el('span', 'cps-attribution-count');
-  attributionSummary.append(el('span', null, 'Attribution Manager'), attributionCount);
-  const roles = el('div', 'cps-roles');
-  attribution.append(attributionSummary, roles);
+  // Foldable sections (Attribution Manager, License, ...); closed at first, with a summary.
+  const groups = new Map(GROUPS.map((config): [string, Group] => {
+    const details = el('details', 'cps-group');
+    const summary = el('summary', 'cps-group-summary');
+    const info = el('span', 'cps-group-info');
+    summary.append(el('span', null, config.title), info);
+    const grid = el('div', 'cps-group-fields');
+    details.append(summary, grid);
+    return [config.id, { config, details, info, grid, states: [] }];
+  }));
 
-  const fieldStates = fields.map((field, i) => {
-    const current = page.tags.find((t) => hasPrefix(t, field.prefix)) || '';
+  const fieldStates = fields.map((field, i): FieldState => {
+    // For each prefix the field owns, the first matching tag ('' if none).
+    const current = fieldPrefixes(field).map((p) => page.tags.find((t) => hasPrefix(t, p)) || '');
     const id = `cps-field-${i}`;
     const onChange = () => {
       updateGuide();
-      updateAttributionCount();
+      updateGroupSummaries();
       if (!field.askApplyToSubpages) {
         control.commit();
         scheduleTags();
@@ -94,30 +114,41 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
         if (!decision.confirmed) {
           control.revert();
           updateGuide();
-          updateAttributionCount();
+          updateGroupSummaries();
           return;
         }
         control.commit();
         save(() => putTags(page.id, collectTags()));
         const ids = decision.subpageIds;
-        const tag = control.committedValue();
-        if (ids.length) save(() => applyToSubpages(ids, field, tag, (text) => setStatus(text)));
+        const tags = control.committedTags();
+        if (ids.length) save(() => applyToSubpages(ids, field, tags, (text) => setStatus(text)));
       });
     };
-    const control: FieldControl = field.type === 'author'
-      ? authorField(field, current, id, onChange)
-      : selectField(field, current, id, onChange);
-    (field.group === 'attribution' ? roles : row).append(control.node);
-    return { field, current, control };
+    const control: FieldControl = field.type === 'license'
+      ? licenseField(field, current, id, onChange)
+      : field.type === 'author'
+        ? authorField(field, current[0], id, onChange)
+        : selectField(field, current[0], id, onChange);
+    const state = { field, current: current.filter(Boolean), control };
+    const group = field.group ? groups.get(field.group) : undefined;
+    if (group) group.states.push(state);
+    (group ? group.grid : row).append(control.node);
+    return state;
   });
 
-  const roleStates = fieldStates.filter((s) => s.field.group === 'attribution');
-  function updateAttributionCount() {
-    const set = roleStates.filter((s) => s.control.value()).length;
-    attributionCount.textContent = `· ${set} of ${roleStates.length} set`;
+  function updateGroupSummaries() {
+    groups.forEach(({ config, info, states }) => {
+      if (config.summary === 'count') {
+        const set = states.filter((s) => s.control.tags().length).length;
+        info.textContent = `· ${set} of ${states.length} set`;
+      } else {
+        const values = states.map((s) => s.control.display()).filter(Boolean);
+        info.textContent = `· ${values.length ? values.join(' ') : 'not set'}`;
+      }
+    });
   }
-  updateAttributionCount();
-  attribution.hidden = !roleStates.length;
+  updateGroupSummaries();
+  groups.forEach((g) => { g.details.hidden = !g.states.length; });
 
   // --- guide listing display (only for guides) ---
   const guide = el('fieldset', 'cps-guide');
@@ -128,22 +159,22 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
   [single, tabbed].forEach((r) => r.input.addEventListener('change', scheduleTags));
   guide.append(single.node, tabbed.node);
   const articleState = fieldStates.find((s) => s.field.prefix.toLowerCase() === ARTICLE_PREFIX);
-  const isGuide = () => !!articleState && articleState.control.value() === GUIDE_TAG;
+  const isGuide = () => !!articleState && articleState.control.tags()[0] === GUIDE_TAG;
   function updateGuide() { guide.hidden = !isGuide(); }
   updateGuide();
 
   // --- free tags: everything except the tags the fields above hold ---
-  const fieldTags = new Set(fieldStates.map((s) => s.current).filter(Boolean));
+  const fieldTags = new Set(fieldStates.flatMap((s) => s.current));
   const freeTags = page.tags.filter((t) => !fieldTags.has(t) && t !== GUIDE_TABBED_TAG);
   const tagsNode = tagsField(freeTags, scheduleTags);
 
   function collectTags(): string[] {
     const all = [...freeTags];
-    fieldStates.forEach((s) => { const v = s.control.committedValue(); if (v) all.push(v); });
+    fieldStates.forEach((s) => all.push(...s.control.committedTags()));
     if (isGuide() && tabbed.input.checked) all.push(GUIDE_TABBED_TAG);
     return [...new Set(all)];
   }
 
-  body.append(top, guide, row, attribution, tagsNode);
+  body.append(top, guide, row, ...[...groups.values()].map((g) => g.details), tagsNode);
   return panel;
 }

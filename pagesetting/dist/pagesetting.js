@@ -13,6 +13,10 @@
   var ARTICLE_PREFIX = "article:";
   var GUIDE_TAG = "article:topic-guide";
   var GUIDE_TABBED_TAG = "guide:tabbed";
+  var GROUPS = [
+    { id: "attribution", title: "Attribution Manager", summary: "count" },
+    { id: "license", title: "License", summary: "values" }
+  ];
   var role = (label, prefix) => ({
     label,
     prefix,
@@ -37,7 +41,36 @@
     role("Translator", "translator@"),
     role("Contributor", "contributor@"),
     role("Illustrator", "illustrator@"),
-    role("Reviewer", "reviewedBy@")
+    role("Reviewer", "reviewedBy@"),
+    {
+      label: "License",
+      prefix: "license:",
+      versionPrefix: "licenseversion:",
+      type: "license",
+      group: "license",
+      askApplyToSubpages: true,
+      options: []
+    }
+  ];
+  function fieldPrefixes(field) {
+    return field.versionPrefix ? [field.prefix, field.versionPrefix] : [field.prefix];
+  }
+  var CC_VERSIONS = [["10", "1.0"], ["20", "2.0"], ["25", "2.5"], ["30", "3.0"], ["40", "4.0"]];
+  var LICENSES = [
+    { key: "arr", text: "All Rights Reserved", versions: [] },
+    { key: "ccby", text: "CC BY", versions: CC_VERSIONS },
+    { key: "ccbync", text: "CC BY-NC", versions: CC_VERSIONS },
+    { key: "ccbyncnd", text: "CC BY-NC-ND", versions: CC_VERSIONS },
+    { key: "ccbyncsa", text: "CC BY-NC-SA", versions: CC_VERSIONS },
+    { key: "ccbynd", text: "CC BY-ND", versions: CC_VERSIONS },
+    { key: "ccbysa", text: "CC BY-SA", versions: CC_VERSIONS },
+    { key: "gnu", text: "GNU", versions: [] },
+    { key: "gnudsl", text: "GNU DSL", versions: [["10", "1.0"]] },
+    { key: "gnufdl", text: "GNU FDL", versions: [["11", "1.1"], ["12", "1.2"], ["13", "1.3"]] },
+    { key: "gnugpl", text: "GNU GPL", versions: [["10", "1.0"], ["20", "2.0"], ["30", "3.0"]] },
+    { key: "publicdomain", text: "Public Domain", versions: [] },
+    { key: "ck12", text: "CK-12 License", versions: [] },
+    { key: "mixed", text: "Multiple Licenses", versions: [] }
   ];
   var TAG_SAVE_DELAY_MS = 600;
   var SUMMARY_SAVE_DELAY_MS = 1500;
@@ -102,18 +135,22 @@
       type: "application/xml"
     });
   }
-  async function replaceFieldTag(pageId, prefix, tag) {
+  async function replaceFieldTags(pageId, prefixes, newTags) {
     const tags = await getTags(pageId);
-    const i = tags.findIndex((t) => hasPrefix(t, prefix));
-    if (i >= 0) {
-      if (tags[i] === tag) return;
-      if (tag) tags.splice(i, 1, tag);
-      else tags.splice(i, 1);
-    } else {
-      if (!tag) return;
-      tags.push(tag);
+    const next = [...tags];
+    for (const prefix of prefixes) {
+      const tag = newTags.find((t) => hasPrefix(t, prefix)) || "";
+      const i = next.findIndex((t) => hasPrefix(t, prefix));
+      if (i >= 0) {
+        if (tag) next.splice(i, 1, tag);
+        else next.splice(i, 1);
+      } else if (tag) {
+        next.push(tag);
+      }
     }
-    await putTags(pageId, [...new Set(tags)]);
+    const result = [...new Set(next)];
+    if (result.length === tags.length && result.every((t, i) => t === tags[i])) return;
+    await putTags(pageId, result);
   }
   async function putOverview(pageId, text) {
     const path = `/pages/${pageId}/properties/${enc(OVERVIEW_PROPERTY)}`;
@@ -348,15 +385,79 @@
     });
     return {
       node: labelled(field.label, wrap, id),
-      value: () => value,
+      tags: () => value ? [value] : [],
       display: () => name,
-      committedValue: () => committed.value,
+      committedTags: () => committed.value ? [committed.value] : [],
       commit: () => {
         committed = { value, name };
       },
       revert: () => {
         ({ value, name } = committed);
         show();
+      }
+    };
+  }
+
+  // src/fields/license.ts
+  function licenseField(field, current, id, onChange) {
+    const prefix = field.prefix;
+    const versionPrefix = field.versionPrefix || "";
+    const [savedLicense = "", savedVersion = ""] = current;
+    const versionId = `${id}-version`;
+    const license = el("select", "cps-select");
+    license.id = id;
+    license.add(new Option("(not set)", NOT_SET));
+    LICENSES.forEach((l) => license.add(new Option(l.text, prefix + l.key)));
+    if (savedLicense && !LICENSES.some((l) => prefix + l.key === savedLicense)) {
+      license.add(new Option(savedLicense.slice(prefix.length), savedLicense));
+    }
+    license.value = savedLicense || NOT_SET;
+    const version = el("select", "cps-select");
+    version.id = versionId;
+    const versionTags = (licenseTag) => {
+      var _a;
+      return (((_a = LICENSES.find((l) => prefix + l.key === licenseTag)) == null ? void 0 : _a.versions) || []).map(([key, label]) => [versionPrefix + key, label]);
+    };
+    const fillVersions = (licenseTag, wanted, keepSaved) => {
+      const options = versionTags(licenseTag);
+      version.replaceChildren(new Option(options.length ? "(not set)" : "\u2014", NOT_SET));
+      options.forEach(([tag, label]) => version.add(new Option(label, tag)));
+      if (keepSaved && wanted && !options.some(([tag]) => tag === wanted)) {
+        version.add(new Option(wanted.slice(versionPrefix.length), wanted));
+      }
+      version.value = Array.from(version.options).some((o) => o.value === wanted) ? wanted : NOT_SET;
+      version.disabled = version.options.length <= 1;
+    };
+    fillVersions(license.value, savedVersion, true);
+    license.addEventListener("change", () => {
+      const options = versionTags(license.value);
+      const stillValid = options.some(([tag]) => tag === version.value);
+      const newest = options.length ? options[options.length - 1][0] : "";
+      fillVersions(license.value, stillValid ? version.value : newest, false);
+      onChange();
+    });
+    version.addEventListener("change", onChange);
+    const read = () => [license.value, version.value].filter((v) => v !== NOT_SET);
+    let committed = { license: license.value, version: version.value };
+    const node = el("div", "cps-field-pair");
+    node.append(labelled(field.label, license, id), labelled("Version", version, versionId));
+    return {
+      node,
+      tags: read,
+      display: () => {
+        var _a, _b, _c, _d;
+        if (license.value === NOT_SET) return "";
+        const text = ((_b = (_a = license.selectedOptions[0]) == null ? void 0 : _a.textContent) == null ? void 0 : _b.trim()) || "";
+        const ver = version.value === NOT_SET ? "" : ((_d = (_c = version.selectedOptions[0]) == null ? void 0 : _c.textContent) == null ? void 0 : _d.trim()) || "";
+        return ver ? `${text} ${ver}` : text;
+      },
+      committedTags: () => [committed.license, committed.version].filter((v) => v !== NOT_SET),
+      commit: () => {
+        committed = { license: license.value, version: version.value };
+      },
+      revert: () => {
+        license.value = committed.license;
+        fillVersions(committed.license, committed.version, true);
       }
     };
   }
@@ -375,12 +476,12 @@
     select.addEventListener("change", onChange);
     return {
       node: labelled(field.label, select, id),
-      value: () => select.value === NOT_SET ? "" : select.value,
+      tags: () => select.value === NOT_SET ? [] : [select.value],
       display: () => {
         var _a, _b;
         return select.value === NOT_SET ? "" : ((_b = (_a = select.selectedOptions[0]) == null ? void 0 : _a.textContent) == null ? void 0 : _b.trim()) || "";
       },
-      committedValue: () => committed === NOT_SET ? "" : committed,
+      committedTags: () => committed === NOT_SET ? [] : [committed],
       commit: () => {
         committed = select.value;
       },
@@ -587,39 +688,40 @@ ${message}`);
     return ids;
   }
   function confirmFieldChange(pageId, field, control) {
-    const tag = control.value();
-    const result = confirmations.then(() => ask(pageId, field, control, tag));
+    const shown = snapshot(control);
+    const result = confirmations.then(() => ask(pageId, field, control, shown));
     confirmations = result.catch(() => void 0);
     return result;
   }
-  async function ask(pageId, field, control, tag) {
-    if (control.value() !== tag) return null;
+  var snapshot = (control) => control.tags().join("\n");
+  async function ask(pageId, field, control, shown) {
+    if (snapshot(control) !== shown) return null;
     let ids = [];
     try {
       ids = await descendants(pageId);
     } catch (err) {
       console.warn("[page-settings] could not list subpages", err);
     }
-    if (control.value() !== tag) return null;
+    if (snapshot(control) !== shown) return null;
     const label = field.label.toLowerCase();
     const pages = `${ids.length} subpage${ids.length === 1 ? "" : "s"}`;
     const { confirmed, checked } = await confirmDialog({
       title: `Change ${label}?`,
-      message: tag ? `Set the ${label} of this page to \u201C${control.display()}\u201D.` : `Clear the ${label} of this page.`,
+      message: shown ? `Set the ${label} of this page to \u201C${control.display()}\u201D.` : `Clear the ${label} of this page.`,
       confirmText: "Save",
       cancelText: "Cancel",
       checkbox: ids.length ? `Also apply to the ${pages} under this page` : void 0
     });
     return { confirmed, subpageIds: confirmed && checked ? ids : [] };
   }
-  async function applyToSubpages(ids, field, tag, onProgress) {
+  async function applyToSubpages(ids, field, tags, onProgress) {
     const pages = `${ids.length} subpage${ids.length === 1 ? "" : "s"}`;
     let done = 0;
     let failed = 0;
     onProgress(`Updating subpages 0/${ids.length}\u2026`);
     await runPool(ids, SUBPAGE_CONCURRENCY, async (id) => {
       try {
-        await replaceFieldTag(id, field.prefix, tag);
+        await replaceFieldTags(id, fieldPrefixes(field), tags);
       } catch (err) {
         failed++;
         console.warn(`[page-settings] could not update subpage ${id}`, err);
@@ -680,18 +782,21 @@ ${message}`);
     top.append(thumbnailField(page, save, setStatus), summaryField(page, save));
     const scheduleTags = debounce(() => save(() => putTags(page.id, collectTags())), TAG_SAVE_DELAY_MS);
     const row = el("div", "cps-fields");
-    const attribution = el("details", "cps-attribution");
-    const attributionSummary = el("summary", "cps-attribution-summary");
-    const attributionCount = el("span", "cps-attribution-count");
-    attributionSummary.append(el("span", null, "Attribution Manager"), attributionCount);
-    const roles = el("div", "cps-roles");
-    attribution.append(attributionSummary, roles);
+    const groups = new Map(GROUPS.map((config) => {
+      const details = el("details", "cps-group");
+      const summary = el("summary", "cps-group-summary");
+      const info = el("span", "cps-group-info");
+      summary.append(el("span", null, config.title), info);
+      const grid = el("div", "cps-group-fields");
+      details.append(summary, grid);
+      return [config.id, { config, details, info, grid, states: [] }];
+    }));
     const fieldStates = fields.map((field, i) => {
-      const current = page.tags.find((t) => hasPrefix(t, field.prefix)) || "";
+      const current = fieldPrefixes(field).map((p) => page.tags.find((t) => hasPrefix(t, p)) || "");
       const id = `cps-field-${i}`;
       const onChange = () => {
         updateGuide();
-        updateAttributionCount();
+        updateGroupSummaries();
         if (!field.askApplyToSubpages) {
           control.commit();
           scheduleTags();
@@ -702,27 +807,38 @@ ${message}`);
           if (!decision.confirmed) {
             control.revert();
             updateGuide();
-            updateAttributionCount();
+            updateGroupSummaries();
             return;
           }
           control.commit();
           save(() => putTags(page.id, collectTags()));
           const ids = decision.subpageIds;
-          const tag = control.committedValue();
-          if (ids.length) save(() => applyToSubpages(ids, field, tag, (text) => setStatus(text)));
+          const tags = control.committedTags();
+          if (ids.length) save(() => applyToSubpages(ids, field, tags, (text) => setStatus(text)));
         });
       };
-      const control = field.type === "author" ? authorField(field, current, id, onChange) : selectField(field, current, id, onChange);
-      (field.group === "attribution" ? roles : row).append(control.node);
-      return { field, current, control };
+      const control = field.type === "license" ? licenseField(field, current, id, onChange) : field.type === "author" ? authorField(field, current[0], id, onChange) : selectField(field, current[0], id, onChange);
+      const state = { field, current: current.filter(Boolean), control };
+      const group = field.group ? groups.get(field.group) : void 0;
+      if (group) group.states.push(state);
+      (group ? group.grid : row).append(control.node);
+      return state;
     });
-    const roleStates = fieldStates.filter((s) => s.field.group === "attribution");
-    function updateAttributionCount() {
-      const set = roleStates.filter((s) => s.control.value()).length;
-      attributionCount.textContent = `\xB7 ${set} of ${roleStates.length} set`;
+    function updateGroupSummaries() {
+      groups.forEach(({ config, info, states }) => {
+        if (config.summary === "count") {
+          const set = states.filter((s) => s.control.tags().length).length;
+          info.textContent = `\xB7 ${set} of ${states.length} set`;
+        } else {
+          const values = states.map((s) => s.control.display()).filter(Boolean);
+          info.textContent = `\xB7 ${values.length ? values.join(" ") : "not set"}`;
+        }
+      });
     }
-    updateAttributionCount();
-    attribution.hidden = !roleStates.length;
+    updateGroupSummaries();
+    groups.forEach((g) => {
+      g.details.hidden = !g.states.length;
+    });
     const guide = el("fieldset", "cps-guide");
     guide.append(el("legend", "cps-heading", "Guide listing display :"));
     const single = radio("cps-guide", "single", "Single", "Topic hierarchy");
@@ -731,24 +847,21 @@ ${message}`);
     [single, tabbed].forEach((r) => r.input.addEventListener("change", scheduleTags));
     guide.append(single.node, tabbed.node);
     const articleState = fieldStates.find((s) => s.field.prefix.toLowerCase() === ARTICLE_PREFIX);
-    const isGuide = () => !!articleState && articleState.control.value() === GUIDE_TAG;
+    const isGuide = () => !!articleState && articleState.control.tags()[0] === GUIDE_TAG;
     function updateGuide() {
       guide.hidden = !isGuide();
     }
     updateGuide();
-    const fieldTags = new Set(fieldStates.map((s) => s.current).filter(Boolean));
+    const fieldTags = new Set(fieldStates.flatMap((s) => s.current));
     const freeTags = page.tags.filter((t) => !fieldTags.has(t) && t !== GUIDE_TABBED_TAG);
     const tagsNode = tagsField(freeTags, scheduleTags);
     function collectTags() {
       const all = [...freeTags];
-      fieldStates.forEach((s) => {
-        const v = s.control.committedValue();
-        if (v) all.push(v);
-      });
+      fieldStates.forEach((s) => all.push(...s.control.committedTags()));
       if (isGuide() && tabbed.input.checked) all.push(GUIDE_TABBED_TAG);
       return [...new Set(all)];
     }
-    body.append(top, guide, row, attribution, tagsNode);
+    body.append(top, guide, row, ...[...groups.values()].map((g) => g.details), tagsNode);
     return panel;
   }
 

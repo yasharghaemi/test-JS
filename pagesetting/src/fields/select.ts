@@ -18,9 +18,9 @@ export function selectField(field: FieldConfig, current: string, id: string, onC
   select.addEventListener('change', onChange);
   return {
     node: labelled(field.label, select, id),
-    value: () => (select.value === NOT_SET ? '' : select.value),
+    tags: () => (select.value === NOT_SET ? [] : [select.value]),
     display: () => (select.value === NOT_SET ? '' : select.selectedOptions[0]?.textContent?.trim() || ''),
-    committedValue: () => (committed === NOT_SET ? '' : committed),
+    committedTags: () => (committed === NOT_SET ? [] : [committed]),
     commit: () => { committed = select.value; },
     revert: () => { select.value = committed; },
   };

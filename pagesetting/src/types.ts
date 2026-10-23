@@ -19,12 +19,12 @@ export interface Author {
  */
 export interface FieldControl {
   node: HTMLElement;
-  /** The field's shown tag, or '' when not set. */
-  value(): string;
-  /** Human-readable shown value, e.g. the author's name. */
+  /** The field's shown tags; [] when not set. Most fields hold one, License holds two. */
+  tags(): string[];
+  /** Human-readable shown value, e.g. the author's name or "CC BY-SA 4.0". */
   display(): string;
-  /** The last committed tag, or '' when not set. */
-  committedValue(): string;
+  /** The last committed tags. */
+  committedTags(): string[];
   /** Accept the shown value. */
   commit(): void;
   /** Go back to the committed value. */

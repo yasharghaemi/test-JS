@@ -1,5 +1,5 @@
-import { getDescendantIds, replaceFieldTag } from './api';
-import { SUBPAGE_CONCURRENCY, type FieldConfig } from './config';
+import { getDescendantIds, replaceFieldTags } from './api';
+import { SUBPAGE_CONCURRENCY, fieldPrefixes, type FieldConfig } from './config';
 import { confirmDialog } from './dialog';
 import type { FieldControl, SaveResult } from './types';
 import { runPool } from './util';
@@ -30,27 +30,29 @@ export interface ChangeDecision {
  * changed again before its turn came (that later change asks instead).
  */
 export function confirmFieldChange(pageId: number, field: FieldConfig, control: FieldControl): Promise<ChangeDecision | null> {
-  const tag = control.value();
-  const result = confirmations.then(() => ask(pageId, field, control, tag));
+  const shown = snapshot(control);
+  const result = confirmations.then(() => ask(pageId, field, control, shown));
   confirmations = result.catch(() => undefined);
   return result;
 }
 
-async function ask(pageId: number, field: FieldConfig, control: FieldControl, tag: string): Promise<ChangeDecision | null> {
-  if (control.value() !== tag) return null;
+const snapshot = (control: FieldControl) => control.tags().join('\n');
+
+async function ask(pageId: number, field: FieldConfig, control: FieldControl, shown: string): Promise<ChangeDecision | null> {
+  if (snapshot(control) !== shown) return null;
   let ids: string[] = [];
   try {
     ids = await descendants(pageId);
   } catch (err) {
     console.warn('[page-settings] could not list subpages', err); // still confirm, without the option
   }
-  if (control.value() !== tag) return null;
+  if (snapshot(control) !== shown) return null;
 
   const label = field.label.toLowerCase();
   const pages = `${ids.length} subpage${ids.length === 1 ? '' : 's'}`;
   const { confirmed, checked } = await confirmDialog({
     title: `Change ${label}?`,
-    message: tag ? `Set the ${label} of this page to “${control.display()}”.` : `Clear the ${label} of this page.`,
+    message: shown ? `Set the ${label} of this page to “${control.display()}”.` : `Clear the ${label} of this page.`,
     confirmText: 'Save',
     cancelText: 'Cancel',
     checkbox: ids.length ? `Also apply to the ${pages} under this page` : undefined,
@@ -58,15 +60,15 @@ async function ask(pageId: number, field: FieldConfig, control: FieldControl, ta
   return { confirmed, subpageIds: confirmed && checked ? ids : [] };
 }
 
-/** Gives every listed subpage the field's tag (or clears it when tag is ''). */
-export async function applyToSubpages(ids: string[], field: FieldConfig, tag: string, onProgress: (text: string) => void): Promise<SaveResult> {
+/** Gives every listed subpage the field's tags (clearing any the field no longer has). */
+export async function applyToSubpages(ids: string[], field: FieldConfig, tags: string[], onProgress: (text: string) => void): Promise<SaveResult> {
   const pages = `${ids.length} subpage${ids.length === 1 ? '' : 's'}`;
   let done = 0;
   let failed = 0;
   onProgress(`Updating subpages 0/${ids.length}…`);
   await runPool(ids, SUBPAGE_CONCURRENCY, async (id) => {
     try {
-      await replaceFieldTag(id, field.prefix, tag);
+      await replaceFieldTags(id, fieldPrefixes(field), tags);
     } catch (err) {
       failed++;
       console.warn(`[page-settings] could not update subpage ${id}`, err);

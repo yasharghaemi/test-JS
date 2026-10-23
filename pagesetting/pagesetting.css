@@ -87,29 +87,32 @@
 .cps-fields { display: flex; flex-wrap: wrap; gap: 16px 26px; }
 .cps-field { flex: 0 1 298px; min-width: 200px; }
 
-/* Attribution Manager: foldable section of role fields */
-.cps-attribution {
+/* foldable field sections (Attribution Manager, License) */
+.cps-group {
   border: 1px solid var(--cps-border); border-radius: 3px; background: var(--cps-surface);
 }
-.cps-attribution-summary {
+.cps-group-summary {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px; font-size: 17px; cursor: pointer; list-style: none;
 }
-.cps-attribution-summary::-webkit-details-marker { display: none; }
-.cps-attribution-summary::before {
+.cps-group-summary::-webkit-details-marker { display: none; }
+.cps-group-summary::before {
   content: '+'; flex: none; width: 12px; overflow: hidden; text-align: center;
   color: var(--cps-muted); font-size: 18px; line-height: 1;
 }
 /* "\2212" is the minus sign, escaped so the file stays ASCII-safe */
-.cps-attribution[open] > .cps-attribution-summary::before { content: '\2212'; }
-.cps-attribution-count { color: var(--cps-muted); font-size: 14px; }
-/* as many roles per row as fit, each with its label above the search box */
-.cps-roles {
+.cps-group[open] > .cps-group-summary::before { content: '\2212'; }
+.cps-group-info { color: var(--cps-muted); font-size: 14px; }
+/* as many fields per row as fit, each with its label above its control */
+.cps-group-fields {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px 20px; padding: 4px 14px 14px;
 }
-.cps-roles .cps-field { min-width: 0; }
-.cps-roles .cps-heading { margin: 0 0 4px; padding: 0; font-size: 15px; }
+.cps-group-fields .cps-field { min-width: 0; }
+/* a field made of two controls (License + Version) fills two grid cells */
+.cps-field-pair { display: contents; }
+.cps-select:disabled { background: var(--cps-bg); color: var(--cps-muted); }
+.cps-group-fields .cps-heading { margin: 0 0 4px; padding: 0; font-size: 15px; }
 
 .cps-select,
 .cps-input,
