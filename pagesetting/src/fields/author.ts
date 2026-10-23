@@ -11,6 +11,7 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
   const listId = `${id}-list`;
   let value = current;
   let name = value ? known.get(value) || value.slice(prefix.length) : '';
+  let committed = { value, name };
 
   const wrap = el('div', 'cps-combo');
   const input = el('input', 'cps-input');
@@ -44,6 +45,7 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
   // A saved author missing from the known list only has its key; look up the name.
   if (value && !known.has(value)) {
     findAuthor(value.slice(prefix.length)).then((author) => {
+      if (committed.value === current && author) committed.name = author.name;
       if (!author || value !== current) return;
       name = author.name;
       if (document.activeElement !== input) show();
@@ -163,5 +165,15 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
     input.focus();
   });
 
-  return { node: labelled(field.label, wrap, id), value: () => value, display: () => name };
+  return {
+    node: labelled(field.label, wrap, id),
+    value: () => value,
+    display: () => name,
+    committedValue: () => committed.value,
+    commit: () => { committed = { value, name }; },
+    revert: () => {
+      ({ value, name } = committed);
+      show();
+    },
+  };
 }

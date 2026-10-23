@@ -51,8 +51,11 @@ commit-pinned URLs; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h
 - **Attribution Manager** (foldable `<details>`, starts closed): one person per role,
   stored as `author@`, `editor@`, `remixer@`, `translator@`, `contributor@`,
   `illustrator@`, `reviewedBy@` (Reviewer) + `<nameKey>`. Roles are `FIELDS` entries
-  with `group: 'attribution'`; each change offers to apply it to all subpages
-  (offers are queued so dialogs never stack).
+  with `group: 'attribution'` and `askApplyToSubpages: true`. A change to such a
+  field is **not saved until confirmed**: the dialog has Cancel (reverts the field) /
+  Save, plus an "Also apply to the N subpages" checkbox when there are subpages.
+  Fields keep a committed value (`FieldControl.commit/revert/committedValue`); tag
+  saves use only committed values. Dialogs are queued so they never stack.
 - MindTouch API quirks: names containing `#` are double-encoded in paths
   (`util.enc`, e.g. `mindtouch.page%2523overview`); JSON responses give a single
   object instead of a one-item array (`asArray` in `api.ts`); updating an existing

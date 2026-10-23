@@ -194,6 +194,7 @@
     const listId = `${id}-list`;
     let value = current;
     let name = value ? known.get(value) || value.slice(prefix.length) : "";
+    let committed = { value, name };
     const wrap = el("div", "cps-combo");
     const input = el("input", "cps-input");
     input.id = id;
@@ -224,6 +225,7 @@
     show();
     if (value && !known.has(value)) {
       findAuthor(value.slice(prefix.length)).then((author) => {
+        if (committed.value === current && author) committed.name = author.name;
         if (!author || value !== current) return;
         name = author.name;
         if (document.activeElement !== input) show();
@@ -344,7 +346,19 @@
       onChange();
       input.focus();
     });
-    return { node: labelled(field.label, wrap, id), value: () => value, display: () => name };
+    return {
+      node: labelled(field.label, wrap, id),
+      value: () => value,
+      display: () => name,
+      committedValue: () => committed.value,
+      commit: () => {
+        committed = { value, name };
+      },
+      revert: () => {
+        ({ value, name } = committed);
+        show();
+      }
+    };
   }
 
   // src/fields/select.ts
@@ -357,6 +371,7 @@
       select.add(new Option(current.slice(field.prefix.length), current));
     }
     select.value = current || NOT_SET;
+    let committed = select.value;
     select.addEventListener("change", onChange);
     return {
       node: labelled(field.label, select, id),
@@ -364,6 +379,13 @@
       display: () => {
         var _a, _b;
         return select.value === NOT_SET ? "" : ((_b = (_a = select.selectedOptions[0]) == null ? void 0 : _a.textContent) == null ? void 0 : _b.trim()) || "";
+      },
+      committedValue: () => committed === NOT_SET ? "" : committed,
+      commit: () => {
+        committed = select.value;
+      },
+      revert: () => {
+        select.value = committed;
       }
     };
   }
@@ -497,34 +519,46 @@
   }
 
   // src/dialog.ts
-  function confirmDialog({ title, message, confirmText, cancelText }) {
+  function confirmDialog({ title, message, confirmText, cancelText, checkbox }) {
     const dialog = el("dialog", "cps-dialog");
     if (typeof dialog.showModal !== "function") {
-      return Promise.resolve(window.confirm(`${title}
+      const confirmed = window.confirm(`${title}
 
-${message}`));
+${message}`);
+      const checked = confirmed && !!checkbox && window.confirm(checkbox);
+      return Promise.resolve({ confirmed, checked });
     }
     const heading = el("h2", "cps-dialog-title", title);
     heading.id = "cps-dialog-title";
     dialog.setAttribute("aria-labelledby", heading.id);
+    dialog.append(heading, el("p", "cps-dialog-message", message));
+    let box = null;
+    if (checkbox) {
+      const label = el("label", "cps-dialog-check");
+      box = el("input");
+      box.type = "checkbox";
+      label.append(box, el("span", null, checkbox));
+      dialog.append(label);
+    }
     const actions = el("div", "cps-dialog-actions");
     const cancel = el("button", "cps-btn", cancelText);
     cancel.type = "button";
     const confirm = el("button", "cps-btn cps-btn-primary", confirmText);
     confirm.type = "button";
     actions.append(cancel, confirm);
-    dialog.append(heading, el("p", "cps-dialog-message", message), actions);
+    dialog.append(actions);
     document.body.append(dialog);
     const returnFocus = document.activeElement;
     return new Promise((resolve) => {
       let settled = false;
-      const finish = (result) => {
+      const finish = (confirmed) => {
         if (settled) return;
         settled = true;
+        const checked = confirmed && !!box && box.checked;
         dialog.close();
         dialog.remove();
         if (returnFocus && returnFocus.isConnected) returnFocus.focus();
-        resolve(result);
+        resolve({ confirmed, checked });
       };
       cancel.addEventListener("click", () => finish(false));
       confirm.addEventListener("click", () => finish(true));
@@ -536,13 +570,13 @@ ${message}`));
         if (e.key === "Escape") e.stopPropagation();
       });
       dialog.showModal();
-      cancel.focus();
+      confirm.focus();
     });
   }
 
   // src/subpages.ts
   var descendantsCache = /* @__PURE__ */ new Map();
-  var offers = Promise.resolve();
+  var confirmations = Promise.resolve();
   function descendants(pageId) {
     let ids = descendantsCache.get(pageId);
     if (!ids) {
@@ -552,53 +586,48 @@ ${message}`));
     }
     return ids;
   }
-  function offerApplyToSubpages(pageId, field, control, setStatus) {
+  function confirmFieldChange(pageId, field, control) {
     const tag = control.value();
-    offers = offers.then(() => offer(pageId, field, control, setStatus, tag));
-    return offers;
+    const result = confirmations.then(() => ask(pageId, field, control, tag));
+    confirmations = result.catch(() => void 0);
+    return result;
   }
-  async function offer(pageId, field, control, setStatus, tag) {
-    if (control.value() !== tag) return;
-    let ids;
+  async function ask(pageId, field, control, tag) {
+    if (control.value() !== tag) return null;
+    let ids = [];
     try {
       ids = await descendants(pageId);
     } catch (err) {
       console.warn("[page-settings] could not list subpages", err);
-      return;
     }
-    if (!ids.length || control.value() !== tag) return;
+    if (control.value() !== tag) return null;
     const label = field.label.toLowerCase();
     const pages = `${ids.length} subpage${ids.length === 1 ? "" : "s"}`;
-    const apply = await confirmDialog(tag ? {
-      title: `Apply ${label} to subpages?`,
-      message: `This page has ${pages}. Set their ${label} to \u201C${control.display()}\u201D too?`,
-      confirmText: `Apply to ${pages}`,
-      cancelText: "Only this page"
-    } : {
-      title: `Clear ${label} on subpages?`,
-      message: `This page has ${pages}. Clear their ${label} too?`,
-      confirmText: `Clear on ${pages}`,
-      cancelText: "Only this page"
+    const { confirmed, checked } = await confirmDialog({
+      title: `Change ${label}?`,
+      message: tag ? `Set the ${label} of this page to \u201C${control.display()}\u201D.` : `Clear the ${label} of this page.`,
+      confirmText: "Save",
+      cancelText: "Cancel",
+      checkbox: ids.length ? `Also apply to the ${pages} under this page` : void 0
     });
-    if (!apply) return;
+    return { confirmed, subpageIds: confirmed && checked ? ids : [] };
+  }
+  async function applyToSubpages(ids, field, tag, onProgress) {
+    const pages = `${ids.length} subpage${ids.length === 1 ? "" : "s"}`;
     let done = 0;
-    const failed = [];
-    setStatus(`Updating subpages 0/${ids.length}\u2026`);
+    let failed = 0;
+    onProgress(`Updating subpages 0/${ids.length}\u2026`);
     await runPool(ids, SUBPAGE_CONCURRENCY, async (id) => {
       try {
         await replaceFieldTag(id, field.prefix, tag);
       } catch (err) {
-        failed.push(id);
+        failed++;
         console.warn(`[page-settings] could not update subpage ${id}`, err);
       }
       done++;
-      setStatus(`Updating subpages ${done}/${ids.length}\u2026`);
+      onProgress(`Updating subpages ${done}/${ids.length}\u2026`);
     });
-    if (failed.length) {
-      setStatus(`Updated ${ids.length - failed.length} of ${pages}; ${failed.length} failed.`, "error");
-    } else {
-      setStatus(`Updated ${pages}.`, "ok");
-    }
+    return failed ? { text: `Saved. Updated ${ids.length - failed} of ${pages}; ${failed} failed.`, kind: "error" } : { text: `Saved, and updated ${pages}.`, kind: "ok" };
   }
 
   // src/panel.ts
@@ -635,7 +664,11 @@ ${message}`));
     const save = (task, onError) => {
       setStatus("Saving\u2026");
       queue = queue.then(task).then(
-        () => setStatus("Saved", "ok"),
+        (result) => {
+          const r = result;
+          if (r) setStatus(r.text, r.kind);
+          else setStatus("Saved", "ok");
+        },
         (err) => {
           console.warn("[page-settings]", err);
           setStatus("Couldn't save. Try again.", "error");
@@ -659,8 +692,25 @@ ${message}`));
       const onChange = () => {
         updateGuide();
         updateAttributionCount();
-        scheduleTags();
-        if (field.askApplyToSubpages) offerApplyToSubpages(page.id, field, control, setStatus);
+        if (!field.askApplyToSubpages) {
+          control.commit();
+          scheduleTags();
+          return;
+        }
+        confirmFieldChange(page.id, field, control).then((decision) => {
+          if (!decision) return;
+          if (!decision.confirmed) {
+            control.revert();
+            updateGuide();
+            updateAttributionCount();
+            return;
+          }
+          control.commit();
+          save(() => putTags(page.id, collectTags()));
+          const ids = decision.subpageIds;
+          const tag = control.committedValue();
+          if (ids.length) save(() => applyToSubpages(ids, field, tag, (text) => setStatus(text)));
+        });
       };
       const control = field.type === "author" ? authorField(field, current, id, onChange) : selectField(field, current, id, onChange);
       (field.group === "attribution" ? roles : row).append(control.node);
@@ -692,7 +742,7 @@ ${message}`));
     function collectTags() {
       const all = [...freeTags];
       fieldStates.forEach((s) => {
-        const v = s.control.value();
+        const v = s.control.committedValue();
         if (v) all.push(v);
       });
       if (isGuide() && tabbed.input.checked) all.push(GUIDE_TABBED_TAG);

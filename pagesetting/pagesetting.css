@@ -177,6 +177,11 @@
 .cps-dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
 .cps-dialog-title { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
 .cps-dialog-message { margin: 0 0 20px; line-height: 1.45; }
+.cps-dialog-check {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: -8px 0 20px; line-height: 1.4; cursor: pointer;
+}
+.cps-dialog-check input { margin: 3px 0 0; flex: none; }
 .cps-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .cps-btn {
   padding: 7px 14px; border: 1px solid #c8c8c8; border-radius: 3px;

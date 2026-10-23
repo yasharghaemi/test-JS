@@ -6,8 +6,8 @@ import { selectField } from './fields/select';
 import { summaryField } from './fields/summary';
 import { tagsField } from './fields/tags';
 import { thumbnailField } from './fields/thumbnail';
-import { offerApplyToSubpages } from './subpages';
-import type { FieldControl, PageData, Save, SetStatus } from './types';
+import { applyToSubpages, confirmFieldChange } from './subpages';
+import type { FieldControl, PageData, Save, SaveResult, SetStatus } from './types';
 import { debounce, hasPrefix } from './util';
 
 export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
@@ -48,7 +48,10 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
   const save: Save = (task, onError) => {
     setStatus('Saving…');
     queue = queue.then(task).then(
-      () => setStatus('Saved', 'ok'),
+      (result) => {
+        const r = result as SaveResult;
+        if (r) setStatus(r.text, r.kind); else setStatus('Saved', 'ok');
+      },
       (err) => {
         console.warn('[page-settings]', err);
         setStatus("Couldn't save. Try again.", 'error');
@@ -80,8 +83,26 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     const onChange = () => {
       updateGuide();
       updateAttributionCount();
-      scheduleTags();
-      if (field.askApplyToSubpages) offerApplyToSubpages(page.id, field, control, setStatus);
+      if (!field.askApplyToSubpages) {
+        control.commit();
+        scheduleTags();
+        return;
+      }
+      // Nothing is saved until the user confirms; Cancel puts the old value back.
+      confirmFieldChange(page.id, field, control).then((decision) => {
+        if (!decision) return;
+        if (!decision.confirmed) {
+          control.revert();
+          updateGuide();
+          updateAttributionCount();
+          return;
+        }
+        control.commit();
+        save(() => putTags(page.id, collectTags()));
+        const ids = decision.subpageIds;
+        const tag = control.committedValue();
+        if (ids.length) save(() => applyToSubpages(ids, field, tag, (text) => setStatus(text)));
+      });
     };
     const control: FieldControl = field.type === 'author'
       ? authorField(field, current, id, onChange)
@@ -118,7 +139,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
 
   function collectTags(): string[] {
     const all = [...freeTags];
-    fieldStates.forEach((s) => { const v = s.control.value(); if (v) all.push(v); });
+    fieldStates.forEach((s) => { const v = s.control.committedValue(); if (v) all.push(v); });
     if (isGuide() && tabbed.input.checked) all.push(GUIDE_TABBED_TAG);
     return [...new Set(all)];
   }

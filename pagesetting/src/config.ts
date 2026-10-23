@@ -20,7 +20,7 @@ export interface FieldConfig {
   type?: 'select' | 'author';
   /** [tag, label] pairs; each tag starts with `prefix`. For an author field they just name known authors. */
   options: Array<[string, string]>;
-  /** After a change, offer to apply the same value to every subpage. */
+  /** Confirm each change before saving, with an option to apply it to every subpage. */
   askApplyToSubpages?: boolean;
   /** 'attribution' puts the field in the foldable Attribution Manager instead of the main row. */
   group?: 'attribution';
