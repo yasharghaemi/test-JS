@@ -56,8 +56,11 @@ const role = (label: string, prefix: string): FieldConfig => ({
 export const FIELDS: FieldConfig[] = [
   {
     label: 'Article type', prefix: 'article:', options: [
-      ['article:topic', 'Topic'], ['article:topic-guide', 'Guide'],
-      ['article:topic-category', 'Category'],
+      ['article:topic-category', 'Book or Unit'],
+      ['article:topic-guide', 'Chapter'],
+      ['article:topic', 'Section or Page'],
+      ['article:howto', 'N/A'],
+      ['article:reference', 'N/A'],
     ],
   },
   role('Author', 'author@'),
