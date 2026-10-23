@@ -109,6 +109,13 @@ export const LICENSES: LicenseOption[] = [
   { key: 'mixed', text: 'Multiple Licenses', versions: [] },
 ];
 
+// Thumbnail width (px) per article type; uploads are scaled down to it. Article types
+// not listed don't use a thumbnail.
+export const THUMBNAIL_WIDTHS: Record<string, number> = {
+  'article:topic-category': 500, // Book or Unit
+  'article:topic-guide': 250, // Chapter
+};
+
 export const TAG_SAVE_DELAY_MS = 600;
 export const SUMMARY_SAVE_DELAY_MS = 1500;
 export const AUTHOR_LIMIT = 10;

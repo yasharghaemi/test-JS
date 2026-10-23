@@ -78,7 +78,8 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
 
   // --- thumbnail + summary ---
   const top = el('div', 'cps-top');
-  top.append(thumbnailField(page, save, setStatus), summaryField(page, save));
+  const thumbnail = thumbnailField(page, save, setStatus);
+  top.append(thumbnail.node, summaryField(page, save));
 
   // --- tag fields ---
   const scheduleTags = debounce(() => save(() => putTags(page.id, collectTags())), TAG_SAVE_DELAY_MS);
@@ -159,8 +160,13 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
   [single, tabbed].forEach((r) => r.input.addEventListener('change', scheduleTags));
   guide.append(single.node, tabbed.node);
   const articleState = fieldStates.find((s) => s.field.prefix.toLowerCase() === ARTICLE_PREFIX);
-  const isGuide = () => !!articleState && articleState.control.tags()[0] === GUIDE_TAG;
-  function updateGuide() { guide.hidden = !isGuide(); }
+  const articleType = () => (articleState ? articleState.control.tags()[0] || '' : '');
+  const isGuide = () => articleType() === GUIDE_TAG;
+  // Guide display and the thumbnail rule both follow the article type.
+  function updateGuide() {
+    guide.hidden = !isGuide();
+    thumbnail.setArticleType(articleType());
+  }
   updateGuide();
 
   // --- free tags: everything except the tags the fields above hold ---
