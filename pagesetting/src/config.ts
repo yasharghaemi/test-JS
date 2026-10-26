@@ -1,3 +1,5 @@
+import bundledSettings from '../pagesetting.json';
+
 export const DEKI = '/@api/deki';
 export const DEKI_HEADERS: Record<string, string> = {
   'X-Deki-Client': 'mindtouch-martian',
@@ -50,14 +52,6 @@ export interface FieldConfig {
  */
 export type PanelView = 'full' | 'editor' | 'author';
 
-/** MindTouch role (lower case) -> view. Roles not listed get DEFAULT_VIEW. */
-export const ROLE_VIEWS: Record<string, PanelView> = {
-  admin: 'full',
-  editor: 'editor',
-  author: 'author',
-};
-export const DEFAULT_VIEW: PanelView = 'full';
-
 /** A foldable section (card) of fields; its header summarises the fields. */
 export interface GroupConfig {
   id: string;
@@ -70,134 +64,6 @@ export interface GroupConfig {
   wide?: boolean;
 }
 
-// Sections in display order, below the thumbnail and summary and above the tags.
-// Narrow cards are listed in pairs between the wide ones, so they sit side by side
-// on wide screens without leaving a gap.
-export const GROUPS: GroupConfig[] = [
-  { id: 'type', title: 'Page type', summary: 'values', open: true, wide: true },
-  { id: 'display', title: 'Display & status', summary: 'values', open: true },
-  { id: 'license', title: 'License', summary: 'values' },
-  { id: 'attribution', title: 'Attribution Manager', summary: 'count', wide: true },
-  { id: 'publishing', title: 'Publishing', summary: 'values' },
-  { id: 'print', title: 'Print', summary: 'values' },
-];
-
-// One attribution role: a person search box saving `<prefix><nameKey>`.
-const role = (label: string, prefix: string): FieldConfig => ({
-  label, prefix, type: 'author', group: 'attribution', askApplyToSubpages: true, options: [],
-});
-
-// The panel's tag fields, in display order. The first tag matching a field's prefix
-// is its value; any other matching tags stay in the tag list below.
-// To add a field, copy an entry, e.g.
-//   { label: 'Override', prefix: 'override:', options: [['override:yes', 'Yes']] },
-export const FIELDS: FieldConfig[] = [
-  {
-    label: 'Article type', prefix: 'article:', group: 'type', hiddenForEditors: true, options: [
-      ['article:topic-category', 'Book or Unit'],
-      ['article:topic-guide', 'Chapter'],
-      ['article:topic', 'Section or Page'],
-      ['article:howto', 'N/A'],
-      ['article:reference', 'N/A'],
-    ],
-  },
-  {
-    label: 'Stage', prefix: 'stage:', group: 'display', forAuthors: true, options: [
-      ['stage:stub', 'Stub'], ['stage:draft', 'Draft'], ['stage:review', 'Review'],
-      ['stage:final', 'Final'], ['stage:outdated', 'Outdated'], ['stage:obsolete', 'Obsolete'],
-    ],
-  },
-  {
-    label: 'Show Page TOC', prefix: 'showtoc:', group: 'display', forAuthors: true, askApplyToSubpages: true, options: [
-      ['showtoc:yes', 'yes on page'], ['showtoc:no', 'no on page'],
-    ],
-  },
-  {
-    label: 'Autonumber Section Headings', prefix: 'autonumheader:', group: 'display', forAuthors: true, askApplyToSubpages: true, options: [
-      ['autonumheader:yes1', 'title with space delimiters'],
-      ['autonumheader:yes2', 'title with colon delimiters'],
-      ['autonumheader:yes3', 'title with dash delimiters'],
-    ],
-  },
-  {
-    label: 'Override Autonumber', prefix: 'override:', group: 'display', options: [
-      ['override:yes', 'yes'], ['override:no', 'no'],
-    ],
-  },
-  // Publishing and print settings; options and labels match the site's own page settings.
-  // askApplyToSubpages marks the ones the site applies to subpages.
-  {
-    label: 'Cover Page', prefix: 'coverpage:', group: 'publishing', options: [
-      ['coverpage:yes', 'Set Cover Page/Add to Download Center'],
-      ['coverpage:toc', 'Set Cover Page/Not in Download Center'],
-    ],
-  },
-  {
-    label: 'OER program or Publisher', prefix: 'program:', group: 'publishing', askApplyToSubpages: true, options: [
-      ['program:ztccoc', 'College of the Canyons - Zero Textbook Cost Program'],
-      ['program:oeri', 'ASCCC OERI Program'],
-      ['program:ck12', 'CK-12'],
-      ['program:openstax', 'OpenStax'],
-      ['program:galileo', 'GALILEO'],
-      ['program:opensuny', 'OpenSUNY'],
-      ['program:mitocw', 'MIT OpenCourseWare'],
-      ['program:virginiatech', "Virginia Tech Libraries' Open Education Initiative"],
-      ['program:hidden', 'The Publisher Who Must Not Be Named'],
-      ['program:ecampusontario', 'eCampusOntario'],
-      ['program:wac', 'WAC Clearinghouse'],
-      ['program:bcc', 'BC Campus'],
-      ['program:lumen', 'Lumen'],
-      ['program:openoregon', 'Open Oregon'],
-      ['program:openstaxcnx', 'OpenStax CNX'],
-      ['program:pdxopen', 'PDXOpen'],
-      ['program:clc-innovators', 'CLC Innovators'],
-    ],
-  },
-  {
-    label: 'Transcluded', prefix: 'transcluded:', group: 'publishing', askApplyToSubpages: true, options: [
-      ['transcluded:yes', 'yes'],
-    ],
-  },
-  {
-    label: 'Student Analytics', prefix: 'studentanalytics:', group: 'publishing', askApplyToSubpages: true, options: [
-      ['studentanalytics:yes', 'yes'],
-    ],
-  },
-  {
-    label: 'Number of Print Columns', prefix: 'columns:', group: 'print', askApplyToSubpages: true, options: [
-      ['columns:two', 'Two'], ['columns:three', 'Three'],
-    ],
-  },
-  {
-    label: 'PrintOptions', prefix: 'printoptions:', group: 'print', options: [
-      ['printoptions:no-header', 'No Header/Footer'],
-      ['printoptions:no-title', 'No Title'],
-      ['printoptions:no-header-title', 'No Header/Footer/Title'],
-    ],
-  },
-  {
-    label: 'Print CSS', prefix: 'cssprint:', group: 'print', askApplyToSubpages: true, options: [
-      ['cssprint:default', 'Default'], ['cssprint:dense', 'Dense'],
-    ],
-  },
-  role('Author', 'author@'),
-  role('Editor', 'editor@'),
-  role('Remixer', 'remixer@'),
-  role('Translator', 'translator@'),
-  role('Contributor', 'contributor@'),
-  role('Illustrator', 'illustrator@'),
-  role('Reviewer', 'reviewedBy@'),
-  {
-    label: 'License', prefix: 'license:', versionPrefix: 'licenseversion:', type: 'license',
-    group: 'license', askApplyToSubpages: true, forAuthors: true, options: [],
-  },
-];
-
-/** Every tag prefix a field owns: its own, plus the version prefix for a license field. */
-export function fieldPrefixes(field: FieldConfig): string[] {
-  return field.versionPrefix ? [field.prefix, field.versionPrefix] : [field.prefix];
-}
-
 export interface LicenseOption {
   /** Saved as license:<key>. */
   key: string;
@@ -206,32 +72,53 @@ export interface LicenseOption {
   versions: Array<[string, string]>;
 }
 
-const CC_VERSIONS: Array<[string, string]> = [['10', '1.0'], ['20', '2.0'], ['25', '2.5'], ['30', '3.0'], ['40', '4.0']];
+/**
+ * What the panel shows, from pagesetting.json (see settings.ts):
+ * - groups: sections in display order. List narrow cards in pairs between wide ones
+ *   so they sit side by side on wide screens.
+ * - fields: tag fields in display order. A field's value is the first page tag
+ *   starting with its prefix; other matching tags stay in the tag list.
+ * - roleViews / defaultView: MindTouch role (lower case) -> view; others get defaultView.
+ * - licenses: licenses and the versions each allows.
+ * - thumbnailWidths: thumbnail width (px) per article type; types not listed have none.
+ */
+export interface Settings {
+  groups: GroupConfig[];
+  fields: FieldConfig[];
+  roleViews: Record<string, PanelView>;
+  defaultView: PanelView;
+  licenses: LicenseOption[];
+  thumbnailWidths: Record<string, number>;
+}
 
-// Licenses and the versions each one allows.
-export const LICENSES: LicenseOption[] = [
-  { key: 'arr', text: 'All Rights Reserved', versions: [] },
-  { key: 'ccby', text: 'CC BY', versions: CC_VERSIONS },
-  { key: 'ccbync', text: 'CC BY-NC', versions: CC_VERSIONS },
-  { key: 'ccbyncnd', text: 'CC BY-NC-ND', versions: CC_VERSIONS },
-  { key: 'ccbyncsa', text: 'CC BY-NC-SA', versions: CC_VERSIONS },
-  { key: 'ccbynd', text: 'CC BY-ND', versions: CC_VERSIONS },
-  { key: 'ccbysa', text: 'CC BY-SA', versions: CC_VERSIONS },
-  { key: 'gnu', text: 'GNU', versions: [] },
-  { key: 'gnudsl', text: 'GNU DSL', versions: [['10', '1.0']] },
-  { key: 'gnufdl', text: 'GNU FDL', versions: [['11', '1.1'], ['12', '1.2'], ['13', '1.3']] },
-  { key: 'gnugpl', text: 'GNU GPL', versions: [['10', '1.0'], ['20', '2.0'], ['30', '3.0']] },
-  { key: 'publicdomain', text: 'Public Domain', versions: [] },
-  { key: 'ck12', text: 'CK-12 License', versions: [] },
-  { key: 'mixed', text: 'Multiple Licenses', versions: [] },
-];
+// The settings in use. They start as pagesetting.json as it was at build time, and
+// applySettings() swaps in the runtime copy before the panel is built. These are live
+// bindings, so importers always see the current values.
+const bundled = bundledSettings as unknown as Settings;
+export let GROUPS: GroupConfig[] = bundled.groups;
+export let FIELDS: FieldConfig[] = bundled.fields;
+export let ROLE_VIEWS: Record<string, PanelView> = bundled.roleViews;
+export let DEFAULT_VIEW: PanelView = bundled.defaultView;
+export let LICENSES: LicenseOption[] = bundled.licenses;
+export let THUMBNAIL_WIDTHS: Record<string, number> = bundled.thumbnailWidths;
 
-// Thumbnail width (px) per article type; uploads are scaled down to it. Article types
-// not listed don't use a thumbnail.
-export const THUMBNAIL_WIDTHS: Record<string, number> = {
-  'article:topic-category': 500, // Book or Unit
-  'article:topic-guide': 250, // Chapter
-};
+export function currentSettings(): Settings {
+  return { groups: GROUPS, fields: FIELDS, roleViews: ROLE_VIEWS, defaultView: DEFAULT_VIEW, licenses: LICENSES, thumbnailWidths: THUMBNAIL_WIDTHS };
+}
+
+export function applySettings(s: Settings): void {
+  GROUPS = s.groups;
+  FIELDS = s.fields;
+  ROLE_VIEWS = s.roleViews;
+  DEFAULT_VIEW = s.defaultView;
+  LICENSES = s.licenses;
+  THUMBNAIL_WIDTHS = s.thumbnailWidths;
+}
+
+/** Every tag prefix a field owns: its own, plus the version prefix for a license field. */
+export function fieldPrefixes(field: FieldConfig): string[] {
+  return field.versionPrefix ? [field.prefix, field.versionPrefix] : [field.prefix];
+}
 
 /** localStorage key remembering which cards each person had open (per browser). */
 export const OPEN_STATE_KEY = 'cps-open-groups';

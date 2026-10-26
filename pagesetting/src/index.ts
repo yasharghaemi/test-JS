@@ -7,13 +7,20 @@
  * thumbnail file). #mt-summary itself is only hidden, because MindTouch builds the
  * subpage listing block into it later and the panel moves that block in.
  *
- * The tag fields (Article type, Author, ...) are defined in FIELDS in config.ts.
- * Each field stores its value as a page tag made of its prefix and value, e.g.
- * "article:topic" or "author@<authorKey>".
+ * What the panel shows (sections, fields, options, role views, licenses, thumbnail
+ * widths) comes from pagesetting.json - bundled as the default and re-read at runtime
+ * (settings.ts). Each field stores its value as a page tag made of its prefix and
+ * value, e.g. "article:topic" or "author@<authorKey>".
  */
 import { FIELDS } from './config';
 import { buildPanel } from './panel';
+import { loadSettings } from './settings';
 import type { PageData } from './types';
+
+// pagesetting.json sits next to this script (jsDelivr commit, dev server or demo
+// dist/); start loading it now so it's usually ready before #mt-summary appears.
+const scriptBase = ((document.currentScript as HTMLScriptElement | null)?.src || '').replace(/[^/]*$/, '');
+const settingsReady = scriptBase ? loadSettings(`${scriptBase}pagesetting.json`) : Promise.resolve();
 
 // The editor renders #mt-summary on demand, so wait for both it and the data.
 const tryMount = () => {
@@ -21,7 +28,7 @@ const tryMount = () => {
   const data = document.getElementById('cps-data');
   if (original && data && !data.dataset.cpsMounted) {
     data.dataset.cpsMounted = 'true';
-    mount(original, data);
+    settingsReady.then(() => mount(original, data));
   }
 };
 new MutationObserver(tryMount).observe(document.documentElement, { childList: true, subtree: true });

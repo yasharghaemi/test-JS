@@ -4,13 +4,14 @@
   "private": true,
   "description": "Custom Page settings panel for the MindTouch editor",
   "scripts": {
-    "build": "npm run build:js && npm run build:css",
+    "build": "npm run build:js && npm run build:css && npm run build:config",
     "build:js": "esbuild src/index.ts --bundle --format=iife --target=es2019 --minify --sourcemap --legal-comments=none --outfile=dist/pagesetting.min.js",
     "build:css": "esbuild pagesetting.css --minify --outfile=dist/pagesetting.min.css",
     "watch": "esbuild src/index.ts --bundle --format=iife --target=es2019 --sourcemap --outfile=dist/pagesetting.min.js --watch",
     "typecheck": "tsc --noEmit",
-    "dev": "esbuild src/index.ts pagesetting.css --bundle --format=iife --target=es2019 --sourcemap --entry-names=pagesetting --outdir=.dev --servedir=.dev --serve=localhost:8000 --watch=forever",
-    "dev:sandbox": "esbuild src/index.ts pagesetting.css --bundle --format=iife --target=es2019 --sourcemap --entry-names=pagesetting --outdir=.dev --servedir=.dev --serve=0.0.0.0:8000 --watch=forever"
+    "dev": "node scripts/dev.mjs",
+    "dev:sandbox": "node scripts/dev.mjs 0.0.0.0",
+    "build:config": "node -e \"const fs=require('fs');JSON.parse(fs.readFileSync('pagesetting.json','utf8'));fs.copyFileSync('pagesetting.json','dist/pagesetting.json')\""
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

@@ -11,11 +11,18 @@ this GitHub repo through jsDelivr. There is no server code here.
 - `index.html` — local test page for `authorAutoComp.js`.
 - `pagesetting/` — custom Page settings panel that replaces MindTouch's `#mt-summary`
   in the editor. TypeScript, bundled with esbuild.
-  - `src/` — sources. `index.ts` mounts the panel; `config.ts` holds `FIELDS` and all
-    constants; `api.ts` has every MindTouch API call; `fields/` has one module per
-    panel section; `subpages.ts` asks to apply a field change to all subpages.
-  - `dist/pagesetting.min.js` (+ `.map`) and `dist/pagesetting.min.css` — minified
-    build output. **Committed**, because jsDelivr serves it.
+  - `pagesetting.json` — **what the panel shows**: `groups` (sections, order, open,
+    wide), `fields` (order, labels, prefixes, options, type, group, flags),
+    `roleViews`/`defaultView`, `licenses` (with versions), `thumbnailWidths`. Edit this
+    to add/remove/reorder/change settings — no code change needed.
+  - `src/` — sources. `index.ts` mounts the panel; `config.ts` has the types, fixed
+    constants and the live settings bindings (`FIELDS`, `GROUPS`, …) filled from
+    `pagesetting.json`; `settings.ts` loads and validates the JSON at runtime;
+    `api.ts` has every MindTouch API call; `fields/` has one module per panel section;
+    `subpages.ts` asks to apply a field change to all subpages.
+  - `dist/pagesetting.min.js` (+ `.map`), `dist/pagesetting.min.css` and
+    `dist/pagesetting.json` — build output. **Committed**, because jsDelivr serves it.
+  - `scripts/dev.mjs` — the dev server behind `npm run dev`.
   - `pagesetting.css` — panel styles source (minified into `dist/` by the build).
   - `loader.html` — the only code pasted into the site (Custom HTML): calls the
     DekiScript template and loads the `dist/` files only once `#mt-summary` appears.
@@ -27,10 +34,12 @@ this GitHub repo through jsDelivr. There is no server code here.
 
 - `npm install` — once, installs esbuild and typescript.
 - `npm run build` — minified, ASCII-only `dist/pagesetting.min.js` (IIFE, ES2019,
-  with source map) and `dist/pagesetting.min.css`.
+  with source map), `dist/pagesetting.min.css`, and a checked copy of
+  `pagesetting.json` as `dist/pagesetting.json` (build fails if it isn't valid JSON).
 - `npm run watch` — rebuild the JS on change.
 - `npm run dev` — local dev server at `http://localhost:8000` (unminified
-  `pagesetting.js` / `pagesetting.css`, rebuilt on save, output in git-ignored `.dev/`).
+  `pagesetting.js` / `pagesetting.css` rebuilt on save, plus `pagesetting.json` copied
+  on save when valid; output in git-ignored `.dev/`).
   The site's loader uses it only in a browser where `localStorage.cpsDev = 1` is set
   (falls back to the released files if the server isn't running); CSS updates live,
   JS after a reload. Lets you try changes on the dev site without pushing.
@@ -62,19 +71,19 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   `prefix` (prefix includes the separator, e.g. `article:`, `author@`). Other tags
   matching the prefix stay in the free tag list. Author is stored as
   `author@<nameKey>`; older `author:` / `authorname:` tags are shown as plain tags.
-- **Foldable sections** come from `GROUPS` in `config.ts` (`<details class="cps-group">`,
+- **Foldable sections** come from `groups` in `pagesetting.json` (`<details class="cps-group">`,
   closed at first; header shows a count or the chosen values). A field joins one via
   `group: '<id>'`.
 - **License** section: one `type: 'license'` field (`fields/license.ts`) that owns two
   tags, `license:<key>` and `licenseversion:<key>` (e.g. `license:ccbysa`,
-  `licenseversion:40`). `LICENSES` in `config.ts` (from the site's own list) defines
+  `licenseversion:40`). `licenses` in `pagesetting.json` (from the site's own list) defines
   each license and the versions it allows; the version dropdown only offers those, and
   changing the license keeps a still-valid version or picks the newest. Fields can own
   several tags: `FieldControl.tags()/committedTags()` return arrays and
   `fieldPrefixes(field)` lists every prefix a field owns.
 - **Editor view:** DekiScript has no `user.role`, so the template reads the role from
   the user's API document: `xml.text(wiki.api(user.api), "//permissions.user/role")`,
-  sent as `userRole` in `#cps-data`. `ROLE_VIEWS` in `config.ts` maps role (lower
+  sent as `userRole` in `#cps-data`. `roleViews` in `pagesetting.json` maps role (lower
   case) to a view: `admin` → full; `editor` → everything except Article type
   (`hiddenForEditors`); `author` → only `forAuthors`
   fields — Stage (`stage:`), Show Page TOC (`showtoc:`), Autonumber Section Headings
@@ -101,7 +110,7 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   MindTouch changes its panel (it may fill it in late); current and committed values
   are kept. **Exceptions:** author fields (authors API) and License (`LICENSES`, with
   its per-license versions) never use classifications.
-- **Thumbnail** follows the Article type via `THUMBNAIL_WIDTHS` in `config.ts`:
+- **Thumbnail** follows the Article type via `thumbnailWidths` in `pagesetting.json`:
   Book or Unit (`article:topic-category`) 500px wide, Chapter (`article:topic-guide`)
   250px; other types have no thumbnail (field hidden unless an old one is left to
   remove). Uploads are scaled down in the browser (`src/image.ts`, never upscaled).
