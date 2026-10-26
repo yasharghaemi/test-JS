@@ -8,9 +8,15 @@ export const OVERVIEW_PROPERTY = 'mindtouch.page#overview';
 export const THUMBNAIL_FILE = 'mindtouch.page#thumbnail';
 export const NOT_SET = 'not-set';
 export const ARTICLE_PREFIX = 'article:';
-export const GUIDE_TAG = 'article:topic-guide';
-// Tag added when a guide is set to "Tabbed". Check what your site uses and change it here.
-export const GUIDE_TABBED_TAG = 'guide:tabbed';
+
+/**
+ * Article types that have a subpage listing display (Book or Unit: Simple/Detailed;
+ * Chapter: Single/Tabbed). The control itself is MindTouch's own block, moved out of
+ * #mt-summary (see fields/listing.ts).
+ */
+export const LISTING_TYPES = ['article:topic-category', 'article:topic-guide'];
+/** MindTouch's listing block inside #mt-summary. */
+export const LISTING_BLOCK_SELECTOR = '.mt-ordered-subpage-listing-type-container';
 
 export interface FieldConfig {
   label: string;
@@ -38,7 +44,7 @@ export interface FieldConfig {
 /**
  * How much of the panel a role sees:
  * - 'full': everything.
- * - 'editor': everything except Article type and the Guide listing display.
+ * - 'editor': everything except Article type.
  * - 'author': only fields marked `forAuthors`.
  * Hidden parts are still built, so their tags keep being saved unchanged.
  */

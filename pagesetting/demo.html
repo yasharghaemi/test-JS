@@ -11,7 +11,22 @@
     <div id="cps-data" style="display:none">{"pageId":123,"apiUrl":"/@api/deki/pages/123","summary":"Some summary","thumbnail":"","tags":["article:topic-guide","author:libretexts","author@yashar-ghaemi","author@second-author","contributor@jake-turner","editor@yashar-ghaemi","license:ccbysa","licenseversion:40","remixer@yashar-ghaemi","reviewedBy@delmar","stage:draft"],"userRole":"Admin"}</div>
 
     <!-- Stand-in for MindTouch's built-in panel; pagesetting.js replaces it. -->
-    <div id="mt-summary"></div>
+    <div id="mt-summary">
+        <!-- MindTouch's own listing block (copied from a Chapter page); the panel moves it
+             into the Page type card. MindTouch's script, which makes it work, isn't in the demo. -->
+        <div class="mt-ordered-subpage-listing-type-container">
+            <div class="mt-field"><legend class="mt-label">Guide listing display</legend></div>
+            <div class="mt-field mt-radio mt-ordered-subpage-listing"><fieldset><legend class="mt-ordered-subpage-single-legend">
+                <input id="mt-ordered-subpage-single" name="mt-ordered-subpage-listing-type" type="radio" value="single">
+                <label class="mt-label-checkbox mt-icon-listing-single" for="mt-ordered-subpage-single">Single</label>
+                <span id="mt-current-guide-display">(Topic hierarchy)</span>
+            </legend></fieldset></div>
+            <div class="mt-field mt-radio mt-ordered-subpage-listing"><fieldset><legend class="mt-ordered-subpage-single-legend">
+                <input id="mt-ordered-subpage-tabbed" name="mt-ordered-subpage-listing-type" type="radio" value="tabbed">
+                <label class="mt-label-checkbox mt-icon-listing-tabbed" for="mt-ordered-subpage-tabbed">Tabbed</label>
+            </legend></fieldset></div>
+        </div>
+    </div>
 
     <script>
         // Demo only: a fake MindTouch API so saving and "apply to subpages" can be

@@ -70,9 +70,13 @@ export async function replaceFieldTags(pageId: number | string, prefixes: string
   await putTags(pageId, result);
 }
 
+export function putOverview(pageId: number, text: string): Promise<Response> {
+  return putProperty(pageId, OVERVIEW_PROPERTY, text);
+}
+
 // Updating an existing property needs its current ETag; a new one doesn't.
-export async function putOverview(pageId: number, text: string): Promise<Response> {
-  const path = `/pages/${pageId}/properties/${enc(OVERVIEW_PROPERTY)}`;
+export async function putProperty(pageId: number, name: string, text: string): Promise<Response> {
+  const path = `/pages/${pageId}/properties/${enc(name)}`;
   const current = await fetch(DEKI + path, { credentials: 'same-origin', headers: DEKI_HEADERS });
   const etag = current.ok ? current.headers.get('ETag') : null;
   return deki('PUT', path, {

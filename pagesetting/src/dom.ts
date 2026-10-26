@@ -20,12 +20,3 @@ export function labelled(text: string, control: HTMLElement, id: string): HTMLDi
   wrap.append(label, control);
   return wrap;
 }
-
-export function radio(name: string, value: string, text: string, hint?: string) {
-  const label = el('label', 'cps-radio');
-  const input = el('input');
-  Object.assign(input, { type: 'radio', name, value });
-  label.append(input, el('span', null, text));
-  if (hint) label.append(el('span', 'cps-hint', `(${hint})`));
-  return { node: label, input };
-}

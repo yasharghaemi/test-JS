@@ -29,7 +29,7 @@ if (!user.anonymous) {
         summary: overview ? overview.text : "",
         thumbnail: thumbnail ? thumbnail.uri : "",
         tags: [ t.name foreach var t in tagList ],
-        // users with the editor role (authors) get the reduced panel
+        // the role picks the panel view (ROLE_VIEWS in config.ts)
         userRole: userRole
     };
     <div id="cps-data" style="display:none"> json.emit(settings) </div>

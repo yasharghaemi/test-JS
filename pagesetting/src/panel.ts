@@ -1,7 +1,8 @@
 import { putTags } from './api';
-import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, ROLE_VIEWS, type PanelView, fieldPrefixes, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
-import { el, radio } from './dom';
+import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, ROLE_VIEWS, type PanelView, fieldPrefixes, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
+import { el } from './dom';
 import { authorField } from './fields/author';
+import { listingField } from './fields/listing';
 import { licenseField } from './fields/license';
 import { selectField } from './fields/select';
 import { summaryField } from './fields/summary';
@@ -26,7 +27,7 @@ interface Group {
   states: FieldState[];
 }
 
-export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
+export function buildPanel(page: PageData, fields: FieldConfig[], listingSource: HTMLElement | null = null): HTMLElement {
   const panel = el('section', 'cps-panel');
   panel.setAttribute('aria-label', 'Page settings');
 
@@ -110,7 +111,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     const current = fieldPrefixes(field).map((p) => page.tags.find((t) => hasPrefix(t, p)) || '');
     const id = `cps-field-${i}`;
     const onChange = () => {
-      updateGuide();
+      updateArticleType();
       updateGroupSummaries();
       if (!field.askApplyToSubpages) {
         control.commit();
@@ -122,7 +123,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
         if (!decision) return;
         if (!decision.confirmed) {
           control.revert();
-          updateGuide();
+          updateArticleType();
           updateGroupSummaries();
           return;
         }
@@ -158,48 +159,48 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     });
   }
   updateGroupSummaries();
-  groups.forEach((g) => {
-    // A section with nothing visible for this role disappears.
-    g.details.hidden = !g.states.some((s) => !s.control.node.hidden);
-    // Authors have few fields, so everything they see starts unfolded.
-    g.details.open = view === 'author' || !!g.config.open;
-  });
+  // Authors have few fields, so everything they see starts unfolded.
+  groups.forEach((g) => { g.details.open = view === 'author' || !!g.config.open; });
 
-  // --- guide listing display (only for guides) ---
-  const guide = el('fieldset', 'cps-guide');
-  guide.append(el('legend', 'cps-heading', 'Guide listing display :'));
-  const single = radio('cps-guide', 'single', 'Single', 'Topic hierarchy');
-  const tabbed = radio('cps-guide', 'tabbed', 'Tabbed');
-  (page.tags.includes(GUIDE_TABBED_TAG) ? tabbed : single).input.checked = true;
-  [single, tabbed].forEach((r) => r.input.addEventListener('change', scheduleTags));
-  guide.append(single.node, tabbed.node);
+  // --- subpage listing display: depends on the article type; not for authors ---
   const articleState = fieldStates.find((s) => s.field.prefix.toLowerCase() === ARTICLE_PREFIX);
   const articleType = () => (articleState ? articleState.control.tags()[0] || '' : '');
-  const isGuide = () => articleType() === GUIDE_TAG;
-  // Guide display and the thumbnail rule both follow the article type.
-  function updateGuide() {
-    guide.hidden = view !== 'full' || !isGuide();
-    thumbnail.setArticleType(articleType());
-  }
-  updateGuide();
-  // The guide display belongs with Article type, in the Page type section.
+  // MindTouch builds its listing block (in listingSource) for the article type at load.
+  const listing = listingField(listingSource, articleState?.current[0] || '', () => updateSectionVisibility());
+  // It belongs with Article type, in the Page type section.
   const articleGroup = articleState?.field.group ? groups.get(articleState.field.group) : undefined;
-  (articleGroup ? articleGroup.grid : row).append(guide);
+  (articleGroup ? articleGroup.grid : row).append(listing.node);
+
+  // The listing display and the thumbnail rule both follow the article type.
+  function updateArticleType() {
+    listing.setArticleType(view === 'author' ? '' : articleType());
+    thumbnail.setArticleType(articleType());
+    updateSectionVisibility();
+  }
+
+  // A section (or the main row) with nothing visible for this role disappears.
+  // (Function declarations: the listing control can call this while it's being built.)
+  function anyVisible(parent: HTMLElement) {
+    return Array.from(parent.children).some((c) => !(c as HTMLElement).hidden);
+  }
+  function updateSectionVisibility() {
+    groups.forEach((g) => { g.details.hidden = !anyVisible(g.grid); });
+    row.hidden = !anyVisible(row);
+  }
+  updateArticleType();
 
   // --- free tags: everything except the tags the fields above hold ---
   const fieldTags = new Set(fieldStates.flatMap((s) => s.current));
-  const freeTags = page.tags.filter((t) => !fieldTags.has(t) && t !== GUIDE_TABBED_TAG);
+  const freeTags = page.tags.filter((t) => !fieldTags.has(t));
   const tagsNode = tagsField(freeTags, scheduleTags);
 
   function collectTags(): string[] {
     const all = [...freeTags];
     fieldStates.forEach((s) => all.push(...s.control.committedTags()));
-    if (isGuide() && tabbed.input.checked) all.push(GUIDE_TABBED_TAG);
     return [...new Set(all)];
   }
 
   tagsNode.hidden = view === 'author';
-  row.hidden = !Array.from(row.children).some((c) => !(c as HTMLElement).hidden);
   body.append(top, row, ...[...groups.values()].map((g) => g.details), tagsNode);
   return panel;
 }

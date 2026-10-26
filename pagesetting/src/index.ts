@@ -4,7 +4,8 @@
  * Replaces MindTouch's built-in Page settings (#mt-summary) with a panel built from
  * the data the PageSettings DekiScript template emits in #cps-data. Every change is
  * saved straight to the MindTouch API (page tags, the overview property and the
- * thumbnail file), so nothing depends on the removed panel.
+ * thumbnail file). #mt-summary itself is only hidden, because MindTouch builds the
+ * subpage listing block into it later and the panel moves that block in.
  *
  * The tag fields (Article type, Author, ...) are defined in FIELDS in config.ts.
  * Each field stores its value as a page tag made of its prefix and value, e.g.
@@ -36,7 +37,12 @@ function mount(original: HTMLElement, data: HTMLElement) {
     tags: Array.isArray(settings.tags) ? settings.tags.map(String).filter(Boolean) : [],
     userRole: String(settings.userRole || ''),
   };
-  original.replaceWith(buildPanel(page, FIELDS));
+  // #mt-summary is hidden, not removed: MindTouch builds its listing block into it
+  // after it appears, and the panel moves that block in (see fields/listing.ts).
+  original.before(buildPanel(page, FIELDS, original));
+  original.hidden = true;
+  original.style.display = 'none';
+  original.setAttribute('aria-hidden', 'true');
 }
 
 function parseSettings(json: string): Record<string, unknown> {

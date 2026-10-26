@@ -79,13 +79,6 @@
   font: inherit; resize: vertical;
 }
 
-/* guide listing display */
-.cps-guide { margin: 0; padding: 0; border: 0; min-width: 0; }
-.cps-guide .cps-heading { margin-bottom: 12px; }
-.cps-radio { display: inline-flex; align-items: center; gap: 8px; margin-right: 32px; cursor: pointer; }
-.cps-radio input { margin: 0; }
-.cps-hint { font-size: 12px; color: var(--cps-accent); }
-
 /* live-tag fields */
 .cps-fields { display: flex; flex-wrap: wrap; gap: 16px 26px; }
 .cps-field { flex: 0 1 298px; min-width: 200px; }
@@ -116,9 +109,21 @@
 .cps-field-pair { display: contents; }
 .cps-select:disabled { background: var(--cps-bg); color: var(--cps-muted); }
 .cps-group-fields .cps-heading { margin: 0 0 4px; padding: 0; font-size: 15px; }
-/* the guide display sits on its own row under Article type */
-.cps-group-fields .cps-guide { grid-column: 1 / -1; }
-.cps-group-fields .cps-guide .cps-heading { margin-bottom: 8px; }
+/* the listing display sits on its own row under Article type */
+.cps-group-fields .cps-listings { grid-column: 1 / -1; }
+/* MindTouch's own listing block (moved in from #mt-summary): restyle to match */
+.cps-listings .mt-ordered-subpage-listing-type-container {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 28px;
+}
+.cps-listings .mt-ordered-subpage-listing-type-container > .mt-field:first-child { flex-basis: 100%; }
+.cps-listings .mt-field { margin: 0; padding: 0; }
+.cps-listings .mt-label { display: block; margin: 0; padding: 0; font-size: 15px; }
+.cps-listings fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.cps-listings fieldset > legend { display: flex; align-items: center; gap: 6px; padding: 0; }
+.cps-listings input[type="radio"] { margin: 0; }
+.cps-listings .mt-label-checkbox { cursor: pointer; }
+#mt-current-guide-display { font-size: 12px; color: var(--cps-accent); }
+.cps-listings .cps-note { font-size: 13px; }
 
 .cps-select,
 .cps-input,

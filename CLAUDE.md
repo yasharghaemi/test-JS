@@ -68,7 +68,7 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   the user's API document: `xml.text(wiki.api(user.api), "//permissions.user/role")`,
   sent as `userRole` in `#cps-data`. `ROLE_VIEWS` in `config.ts` maps role (lower
   case) to a view: `admin` → full; `editor` → everything except Article type
-  (`hiddenForEditors`) and the Guide listing display; `author` → only `forAuthors`
+  (`hiddenForEditors`); `author` → only `forAuthors`
   fields — Stage (`stage:`), Show Page TOC (`showtoc:`), Autonumber Section Headings
   (`autonumheader:`) and License + version. Unlisted roles get `DEFAULT_VIEW`
   (full). Hidden parts are built but hidden, so their tags are still saved unchanged.
@@ -98,7 +98,17 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   (`util.enc`, e.g. `mindtouch.page%2523overview`); JSON responses give a single
   object instead of a one-item array (`asArray` in `api.ts`); updating an existing
   property needs its `ETag`.
-- `GUIDE_TABBED_TAG` (`guide:tabbed`) is a placeholder — not confirmed against the site.
+- **Subpage listing display** is MindTouch's own block
+  (`.mt-ordered-subpage-listing-type-container`, radios named
+  `mt-ordered-subpage-listing-type`): Book or Unit → Simple/Detailed, Chapter →
+  Single/Tabbed with `#mt-current-guide-display`, Section → none. Its behaviour and
+  saving live in MindTouch's script, which builds the block into `#mt-summary`
+  *after* it appears. So `#mt-summary` is **hidden, not removed** (`index.ts`), and
+  `fields/listing.ts` watches it and moves the block into the Page type card whenever
+  it shows up — don't rebuild it. MindTouch renders it only for the article type at load;
+  after switching to another listing type the card shows a "save and reopen" note.
+  Shown to admins and editors, not authors. Reference HTML of MindTouch's panels
+  (incl. `chapter-sample`) is in `.document/` (git-ignored).
 - Authors API: `https://knitcanvas.fun/api/v1/authors/search?q=<q>&limit=<n>` →
   `{ err, authors: [{ nameKey, name, campusName, isGroup }] }`.
 - Nothing here has automated tests; verify UI changes in `pagesetting/demo.html`.
