@@ -94,6 +94,13 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   marks `recursive` have `askApplyToSubpages: true`. A card hides itself when nothing in it is visible for the role. Field values for these come from the site's
   own settings, but Attribution and License keep this project's design (`role@key`
   tags, `LICENSES` with matching versions), not MindTouch's default panel.
+- **Options from classifications:** select fields take their options and labels from
+  the site's classifications, read from MindTouch's hidden panel (its
+  `<select data-prefix="…">` elements, `classifications.ts`); the `options` in
+  `FIELDS` are only the fallback when a prefix isn't found. Re-read whenever
+  MindTouch changes its panel (it may fill it in late); current and committed values
+  are kept. **Exceptions:** author fields (authors API) and License (`LICENSES`, with
+  its per-license versions) never use classifications.
 - **Thumbnail** follows the Article type via `THUMBNAIL_WIDTHS` in `config.ts`:
   Book or Unit (`article:topic-category`) 500px wide, Chapter (`article:topic-guide`)
   250px; other types have no thumbnail (field hidden unless an old one is left to

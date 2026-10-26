@@ -1,3 +1,4 @@
+import { sameOptions, type Classifications } from '../classifications';
 import { NOT_SET, type FieldConfig } from '../config';
 import { el, labelled } from '../dom';
 import type { FieldControl } from '../types';
@@ -5,17 +6,26 @@ import type { FieldControl } from '../types';
 export function selectField(field: FieldConfig, current: string, id: string, onChange: () => void): FieldControl {
   const select = el('select', 'cps-select');
   select.id = id;
-  const options: Array<[string, string]> = field.options.some(([v]) => v === NOT_SET)
-    ? field.options
-    : [[NOT_SET, '(not set)'], ...field.options];
-  options.forEach(([value, text]) => select.add(new Option(text, value)));
-  // Keep a saved value the site no longer lists, so saving doesn't drop it.
-  if (current && !options.some(([v]) => v === current)) {
-    select.add(new Option(current.slice(field.prefix.length), current));
-  }
-  select.value = current || NOT_SET;
-  let committed = select.value;
+  let options = field.options.filter(([v]) => v !== NOT_SET);
+  let committed = current || NOT_SET;
+
+  // (Re)builds the list. Keeps the shown and committed values even when the list
+  // doesn't have them, so saving or Cancel never drops a saved tag.
+  const fill = () => {
+    const shown = select.value || committed;
+    select.replaceChildren(new Option('(not set)', NOT_SET));
+    options.forEach(([value, text]) => select.add(new Option(text, value)));
+    [shown, committed].forEach((value) => {
+      if (value !== NOT_SET && !options.some(([v]) => v === value)
+        && !Array.from(select.options).some((o) => o.value === value)) {
+        select.add(new Option(value.slice(field.prefix.length), value));
+      }
+    });
+    select.value = shown;
+  };
+  fill(); // empty select, so it shows the committed (saved) value
   select.addEventListener('change', onChange);
+
   return {
     node: labelled(field.label, select, id),
     tags: () => (select.value === NOT_SET ? [] : [select.value]),
@@ -23,5 +33,11 @@ export function selectField(field: FieldConfig, current: string, id: string, onC
     committedTags: () => (committed === NOT_SET ? [] : [committed]),
     commit: () => { committed = select.value; },
     revert: () => { select.value = committed; },
+    setOptions: (classifications) => {
+      const found = classifications.get(field.prefix.toLowerCase());
+      if (!found || sameOptions(found, options)) return;
+      options = found;
+      fill();
+    },
   };
 }

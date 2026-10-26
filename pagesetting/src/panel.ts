@@ -8,6 +8,7 @@ import { selectField } from './fields/select';
 import { summaryField } from './fields/summary';
 import { tagsField } from './fields/tags';
 import { thumbnailField } from './fields/thumbnail';
+import { readClassifications } from './classifications';
 import { applyToSubpages, confirmFieldChange } from './subpages';
 import type { FieldControl, PageData, Save, SaveResult, SetStatus } from './types';
 import { debounce, hasPrefix } from './util';
@@ -27,7 +28,7 @@ interface Group {
   states: FieldState[];
 }
 
-export function buildPanel(page: PageData, fields: FieldConfig[], listingSource: HTMLElement | null = null): HTMLElement {
+export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel: HTMLElement | null = null): HTMLElement {
   const panel = el('section', 'cps-panel');
   panel.setAttribute('aria-label', 'Page settings');
 
@@ -165,7 +166,21 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
     });
   }
   updateGroupSummaries();
-  // Authors have few fields, so everything they see starts unfolded.
+
+  // Options from the site's classifications (read from MindTouch's hidden panel)
+  // replace the config.ts ones where found. MindTouch may fill its panel in late,
+  // so look again whenever it changes.
+  const applyClassifications = () => {
+    const classifications = readClassifications(mindtouchPanel);
+    if (!classifications.size) return;
+    fieldStates.forEach((s) => s.control.setOptions?.(classifications));
+    updateGroupSummaries();
+  };
+  applyClassifications();
+  if (mindtouchPanel) {
+    new MutationObserver(debounce(applyClassifications, 100)).observe(mindtouchPanel, { childList: true, subtree: true });
+  }
+
   // Open state: what this person last chose (per browser), else the default.
   // Authors have few fields, so by default everything they see starts unfolded.
   const openState = readOpenState();
@@ -198,8 +213,8 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
   // --- subpage listing display: depends on the article type; not for authors ---
   const articleState = fieldStates.find((s) => s.field.prefix.toLowerCase() === ARTICLE_PREFIX);
   const articleType = () => (articleState ? articleState.control.tags()[0] || '' : '');
-  // MindTouch builds its listing block (in listingSource) for the article type at load.
-  const listing = listingField(listingSource, articleState?.current[0] || '', () => updateSectionVisibility());
+  // MindTouch builds its listing block (in mindtouchPanel) for the article type at load.
+  const listing = listingField(mindtouchPanel, articleState?.current[0] || '', () => updateSectionVisibility());
   // It belongs with Article type, in the Page type section.
   const articleGroup = articleState?.field.group ? groups.get(articleState.field.group) : undefined;
   (articleGroup ? articleGroup.grid : row).append(listing.node);

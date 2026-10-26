@@ -1,4 +1,4 @@
-import { LICENSES, NOT_SET, type FieldConfig } from '../config';
+import { LICENSES, NOT_SET, type FieldConfig, type LicenseOption } from '../config';
 import { el, labelled } from '../dom';
 import type { FieldControl } from '../types';
 
@@ -6,6 +6,8 @@ import type { FieldControl } from '../types';
  * License + version pair. The version list only offers versions the chosen license
  * allows; changing the license keeps the version if still valid, otherwise picks the
  * license's newest one (or none, for licenses without versions).
+ * Like the author fields, it deliberately ignores the site's classifications and
+ * always uses LICENSES from config.ts.
  */
 export function licenseField(field: FieldConfig, current: string[], id: string, onChange: () => void): FieldControl {
   const prefix = field.prefix;
@@ -13,34 +15,44 @@ export function licenseField(field: FieldConfig, current: string[], id: string, 
   const [savedLicense = '', savedVersion = ''] = current;
   const versionId = `${id}-version`;
 
+  const licenses: LicenseOption[] = LICENSES;
+
   const license = el('select', 'cps-select');
   license.id = id;
-  license.add(new Option('(not set)', NOT_SET));
-  LICENSES.forEach((l) => license.add(new Option(l.text, prefix + l.key)));
-  // Keep a saved license the list doesn't know, so saving doesn't drop it.
-  if (savedLicense && !LICENSES.some((l) => prefix + l.key === savedLicense)) {
-    license.add(new Option(savedLicense.slice(prefix.length), savedLicense));
-  }
-  license.value = savedLicense || NOT_SET;
-
   const version = el('select', 'cps-select');
   version.id = versionId;
 
+  // (Re)builds the license list, keeping the shown and committed licenses even if
+  // the list doesn't have them, so saving or Cancel never drops a saved tag.
+  const fillLicenses = (shown: string, keep: string) => {
+    license.replaceChildren(new Option('(not set)', NOT_SET));
+    licenses.forEach((l) => license.add(new Option(l.text, prefix + l.key)));
+    [shown, keep].forEach((tag) => {
+      if (tag && tag !== NOT_SET && !Array.from(license.options).some((o) => o.value === tag)) {
+        license.add(new Option(tag.slice(prefix.length), tag));
+      }
+    });
+    license.value = shown || NOT_SET;
+  };
+
   const versionTags = (licenseTag: string) =>
-    (LICENSES.find((l) => prefix + l.key === licenseTag)?.versions || []).map(([key, label]): [string, string] => [versionPrefix + key, label]);
+    (licenses.find((l) => prefix + l.key === licenseTag)?.versions || []).map(([key, label]): [string, string] => [versionPrefix + key, label]);
 
   // keepSaved shows a saved version even when it doesn't fit (only when loading or reverting).
   const fillVersions = (licenseTag: string, wanted: string, keepSaved: boolean) => {
     const options = versionTags(licenseTag);
     version.replaceChildren(new Option(options.length ? '(not set)' : '—', NOT_SET));
     options.forEach(([tag, label]) => version.add(new Option(label, tag)));
-    if (keepSaved && wanted && !options.some(([tag]) => tag === wanted)) {
+    if (keepSaved && wanted && wanted !== NOT_SET && !options.some(([tag]) => tag === wanted)) {
       version.add(new Option(wanted.slice(versionPrefix.length), wanted));
     }
     version.value = Array.from(version.options).some((o) => o.value === wanted) ? wanted : NOT_SET;
     version.disabled = version.options.length <= 1;
   };
+
+  fillLicenses(savedLicense, savedLicense);
   fillVersions(license.value, savedVersion, true);
+  let committed = { license: license.value, version: version.value };
 
   license.addEventListener('change', () => {
     const options = versionTags(license.value);
@@ -51,15 +63,12 @@ export function licenseField(field: FieldConfig, current: string[], id: string, 
   });
   version.addEventListener('change', onChange);
 
-  const read = () => [license.value, version.value].filter((v) => v !== NOT_SET);
-  let committed = { license: license.value, version: version.value };
-
   const node = el('div', 'cps-field-pair');
   node.append(labelled(field.label, license, id), labelled('Version', version, versionId));
 
   return {
     node,
-    tags: read,
+    tags: () => [license.value, version.value].filter((v) => v !== NOT_SET),
     display: () => {
       if (license.value === NOT_SET) return '';
       const text = license.selectedOptions[0]?.textContent?.trim() || '';
@@ -69,7 +78,7 @@ export function licenseField(field: FieldConfig, current: string[], id: string, 
     committedTags: () => [committed.license, committed.version].filter((v) => v !== NOT_SET),
     commit: () => { committed = { license: license.value, version: version.value }; },
     revert: () => {
-      license.value = committed.license;
+      fillLicenses(committed.license, committed.license);
       fillVersions(committed.license, committed.version, true);
     },
   };

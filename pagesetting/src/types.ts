@@ -1,3 +1,5 @@
+import type { Classifications } from './classifications';
+
 export interface PageData {
   id: number;
   summary: string;
@@ -31,6 +33,8 @@ export interface FieldControl {
   commit(): void;
   /** Go back to the committed value. */
   revert(): void;
+  /** Take options from the site's classifications, if it has some for this field. */
+  setOptions?(classifications: Classifications): void;
 }
 
 export type StatusKind = 'ok' | 'error' | '';
