@@ -40,8 +40,17 @@ function mount(original: HTMLElement, data: HTMLElement) {
   // #mt-summary is hidden, not removed: MindTouch builds its listing block into it
   // after it appears, and the panel moves that block in (see fields/listing.ts).
   original.before(buildPanel(page, FIELDS, original));
-  original.hidden = true;
-  original.style.display = 'none';
+  // Hide MindTouch's panel for good: the cps-active rule in pagesetting.css hides
+  // #mt-summary with !important, even if MindTouch restyles or rebuilds it. It only
+  // applies once our panel exists, so a failed load leaves MindTouch's panel usable.
+  document.documentElement.classList.add('cps-active');
+  const hide = () => {
+    if (original.style.display === 'none' && original.style.getPropertyPriority('display') === 'important') return;
+    original.style.setProperty('display', 'none', 'important');
+  };
+  hide();
+  // ...and if MindTouch sets an inline style of its own (even !important), hide again.
+  new MutationObserver(hide).observe(original, { attributes: true, attributeFilter: ['style'] });
   original.setAttribute('aria-hidden', 'true');
 }
 

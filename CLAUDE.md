@@ -115,7 +115,10 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   `mt-ordered-subpage-listing-type`): Book or Unit → Simple/Detailed, Chapter →
   Single/Tabbed with `#mt-current-guide-display`, Section → none. Its behaviour and
   saving live in MindTouch's script, which builds the block into `#mt-summary`
-  *after* it appears. So `#mt-summary` is **hidden, not removed** (`index.ts`), and
+  *after* it appears. So `#mt-summary` is **hidden, not removed** (`index.ts`: inline
+  `display:none !important`, re-applied if MindTouch changes its style, plus
+  `html.cps-active #mt-summary { display:none !important }` in the CSS, which also
+  covers a rebuilt element; `cps-active` is only set once our panel mounts), and
   `fields/listing.ts` watches it and moves the block into the Page type card whenever
   it shows up — don't rebuild it. MindTouch renders it only for the article type at load;
   after switching to another listing type the card shows a "save and reopen" note.

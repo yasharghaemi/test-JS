@@ -1,5 +1,9 @@
 /* Custom Page settings panel (pagesetting.js). Replaces MindTouch's #mt-summary. */
 
+/* MindTouch's own panel stays in the page (it builds the listing block into it) but
+   is never shown once ours is mounted - even if MindTouch restyles or rebuilds it. */
+html.cps-active #mt-summary { display: none !important; }
+
 .cps-panel {
   --cps-bg: #eeeeee;
   --cps-surface: #ffffff;
