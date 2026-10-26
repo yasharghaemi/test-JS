@@ -29,7 +29,15 @@ export interface FieldConfig {
   askApplyToSubpages?: boolean;
   /** Id of a GROUPS entry: puts the field in that foldable section instead of the main row. */
   group?: string;
+  /** Shown to users with EDITOR_ROLE, who see only these fields. */
+  forEditors?: boolean;
 }
+
+/**
+ * MindTouch role (case-insensitive) that gets the reduced panel with only
+ * `forEditors` fields. Every other role gets the full panel.
+ */
+export const EDITOR_ROLE = 'editor';
 
 /** A foldable section of fields. Starts closed; its header summarises the fields. */
 export interface GroupConfig {
@@ -63,6 +71,24 @@ export const FIELDS: FieldConfig[] = [
       ['article:reference', 'N/A'],
     ],
   },
+  {
+    label: 'Stage', prefix: 'stage:', forEditors: true, options: [
+      ['stage:stub', 'Stub'], ['stage:draft', 'Draft'], ['stage:review', 'Review'],
+      ['stage:final', 'Final'], ['stage:outdated', 'Outdated'], ['stage:obsolete', 'Obsolete'],
+    ],
+  },
+  {
+    label: 'Show Page TOC', prefix: 'showtoc:', forEditors: true, askApplyToSubpages: true, options: [
+      ['showtoc:yes', 'yes on page'], ['showtoc:no', 'no on page'],
+    ],
+  },
+  {
+    label: 'Autonumber Section Headings', prefix: 'autonumheader:', forEditors: true, askApplyToSubpages: true, options: [
+      ['autonumheader:yes1', 'title with space delimiters'],
+      ['autonumheader:yes2', 'title with colon delimiters'],
+      ['autonumheader:yes3', 'title with dash delimiters'],
+    ],
+  },
   role('Author', 'author@'),
   role('Editor', 'editor@'),
   role('Remixer', 'remixer@'),
@@ -72,7 +98,7 @@ export const FIELDS: FieldConfig[] = [
   role('Reviewer', 'reviewedBy@'),
   {
     label: 'License', prefix: 'license:', versionPrefix: 'licenseversion:', type: 'license',
-    group: 'license', askApplyToSubpages: true, options: [],
+    group: 'license', askApplyToSubpages: true, forEditors: true, options: [],
   },
 ];
 

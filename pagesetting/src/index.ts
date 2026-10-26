@@ -34,6 +34,7 @@ function mount(original: HTMLElement, data: HTMLElement) {
     summary: String(settings.summary || ''),
     thumbnail: String(settings.thumbnail || ''),
     tags: Array.isArray(settings.tags) ? settings.tags.map(String).filter(Boolean) : [],
+    userRole: String(settings.userRole || ''),
   };
   original.replaceWith(buildPanel(page, FIELDS));
 }

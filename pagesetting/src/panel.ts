@@ -1,5 +1,5 @@
 import { putTags } from './api';
-import { ARTICLE_PREFIX, GROUPS, fieldPrefixes, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
+import { ARTICLE_PREFIX, EDITOR_ROLE, GROUPS, fieldPrefixes, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
 import { el, radio } from './dom';
 import { authorField } from './fields/author';
 import { licenseField } from './fields/license';
@@ -76,8 +76,13 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     );
   };
 
+  // Editors (authors) get a reduced panel: only `forEditors` fields. Everything else is
+  // still built, just hidden, so its tags keep being saved unchanged.
+  const limited = page.userRole.trim().toLowerCase() === EDITOR_ROLE;
+
   // --- thumbnail + summary ---
   const top = el('div', 'cps-top');
+  top.hidden = limited;
   const thumbnail = thumbnailField(page, save, setStatus);
   top.append(thumbnail.node, summaryField(page, save));
 
@@ -130,6 +135,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
       : field.type === 'author'
         ? authorField(field, current[0], id, onChange)
         : selectField(field, current[0], id, onChange);
+    if (limited && !field.forEditors) control.node.hidden = true;
     const state = { field, current: current.filter(Boolean), control };
     const group = field.group ? groups.get(field.group) : undefined;
     if (group) group.states.push(state);
@@ -149,7 +155,10 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     });
   }
   updateGroupSummaries();
-  groups.forEach((g) => { g.details.hidden = !g.states.length; });
+  groups.forEach((g) => {
+    g.details.hidden = !g.states.some((s) => !s.control.node.hidden);
+    g.details.open = limited; // editors have few fields, so show them unfolded
+  });
 
   // --- guide listing display (only for guides) ---
   const guide = el('fieldset', 'cps-guide');
@@ -164,7 +173,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
   const isGuide = () => articleType() === GUIDE_TAG;
   // Guide display and the thumbnail rule both follow the article type.
   function updateGuide() {
-    guide.hidden = !isGuide();
+    guide.hidden = limited || !isGuide();
     thumbnail.setArticleType(articleType());
   }
   updateGuide();
@@ -181,6 +190,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     return [...new Set(all)];
   }
 
+  tagsNode.hidden = limited;
   body.append(top, guide, row, ...[...groups.values()].map((g) => g.details), tagsNode);
   return panel;
 }

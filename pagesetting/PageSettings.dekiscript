@@ -17,6 +17,9 @@ if (!user.anonymous) {
     var tagList = page.tags is map ? map.values(page.tags) : (page.tags ?? []);
     var overview = page.properties["mindtouch.page#overview"];
     var thumbnail = page.files["mindtouch.page#thumbnail"];
+    // The user object has no role property; the user's API document (user.api,
+    // e.g. /@api/deki/users/3) has it at <user><permissions.user><role>.
+    var userRole = xml.text(wiki.api(user.api), "//permissions.user/role") ?? "";
 
     // DekiScript reads "-" in attribute names as subtraction, so no data-* attributes:
     // the settings go in as one JSON object in the element's text.
@@ -25,7 +28,9 @@ if (!user.anonymous) {
         apiUrl: page.api,
         summary: overview ? overview.text : "",
         thumbnail: thumbnail ? thumbnail.uri : "",
-        tags: [ t.name foreach var t in tagList ]
+        tags: [ t.name foreach var t in tagList ],
+        // users with the editor role (authors) get the reduced panel
+        userRole: userRole
     };
     <div id="cps-data" style="display:none"> json.emit(settings) </div>
 }

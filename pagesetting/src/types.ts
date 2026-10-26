@@ -3,6 +3,8 @@ export interface PageData {
   summary: string;
   thumbnail: string;
   tags: string[];
+  /** The viewer's MindTouch role from their API document, e.g. "Editor"; '' if unknown. */
+  userRole: string;
 }
 
 export interface Author {

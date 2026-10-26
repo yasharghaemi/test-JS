@@ -64,6 +64,15 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   changing the license keeps a still-valid version or picks the newest. Fields can own
   several tags: `FieldControl.tags()/committedTags()` return arrays and
   `fieldPrefixes(field)` lists every prefix a field owns.
+- **Editor view:** DekiScript has no `user.role`, so the template reads the role from
+  the user's API document: `xml.text(wiki.api(user.api), "//permissions.user/role")`,
+  sent as `userRole` in `#cps-data`. Users whose role is `EDITOR_ROLE` (`editor`,
+  case-insensitive; authors) see only fields with `forEditors: true` — Stage
+  (`stage:`), Show Page TOC (`showtoc:`), Autonumber Section Headings
+  (`autonumheader:`) and License + version. Everything else is built but hidden, so
+  its tags are still saved unchanged. Field values for these come from the site's
+  own settings, but Attribution and License keep this project's design (`role@key`
+  tags, `LICENSES` with matching versions), not MindTouch's default panel.
 - **Thumbnail** follows the Article type via `THUMBNAIL_WIDTHS` in `config.ts`:
   Book or Unit (`article:topic-category`) 500px wide, Chapter (`article:topic-guide`)
   250px; other types have no thumbnail (field hidden unless an old one is left to
