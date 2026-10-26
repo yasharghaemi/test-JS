@@ -66,14 +66,18 @@ export interface GroupConfig {
   summary: 'count' | 'values';
   /** Start unfolded (authors always see their sections unfolded). */
   open?: boolean;
+  /** Span the full width; other cards pair up two-across on wide screens. */
+  wide?: boolean;
 }
 
 // Sections in display order, below the thumbnail and summary and above the tags.
+// Narrow cards are listed in pairs between the wide ones, so they sit side by side
+// on wide screens without leaving a gap.
 export const GROUPS: GroupConfig[] = [
-  { id: 'type', title: 'Page type', summary: 'values', open: true },
+  { id: 'type', title: 'Page type', summary: 'values', open: true, wide: true },
   { id: 'display', title: 'Display & status', summary: 'values', open: true },
-  { id: 'attribution', title: 'Attribution Manager', summary: 'count' },
   { id: 'license', title: 'License', summary: 'values' },
+  { id: 'attribution', title: 'Attribution Manager', summary: 'count', wide: true },
   { id: 'publishing', title: 'Publishing', summary: 'values' },
   { id: 'print', title: 'Print', summary: 'values' },
 ];
@@ -228,6 +232,9 @@ export const THUMBNAIL_WIDTHS: Record<string, number> = {
   'article:topic-category': 500, // Book or Unit
   'article:topic-guide': 250, // Chapter
 };
+
+/** localStorage key remembering which cards each person had open (per browser). */
+export const OPEN_STATE_KEY = 'cps-open-groups';
 
 export const TAG_SAVE_DELAY_MS = 600;
 export const SUMMARY_SAVE_DELAY_MS = 1500;

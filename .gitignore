@@ -15,3 +15,5 @@ Thumbs.db
 
 .document
 .document/*
+# Local dev server output (npm run dev)
+.dev/

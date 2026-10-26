@@ -1,0 +1,13 @@
+{
+  "setupTasks": [
+    { "name": "Install build tools", "command": "cd pagesetting && npm install" }
+  ],
+  "tasks": {
+    "dev": {
+      "name": "Page settings dev server",
+      "command": "cd pagesetting && npm run dev:sandbox",
+      "runAtStart": true,
+      "preview": { "port": 8000 }
+    }
+  }
+}

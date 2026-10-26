@@ -4,31 +4,68 @@
 
   The JS and CSS are downloaded only when the editor's #mt-summary appears, so
   normal page views load nothing; the browser caches both files after that.
-  After each push, replace the commit hash in BASE with the new one.
+  After each push, replace the commit hash in RELEASE with the new one.
+
+  Dev mode (only for your own browser): start a dev server, then in the browser
+  console on the site set localStorage.cpsDev and reload:
+    - your computer (`npm run dev` in pagesetting/):  localStorage.cpsDev = 1
+    - a CodeSandbox Devbox (starts `npm run dev:sandbox` itself):
+        localStorage.cpsDev = 'https://<your-devbox>-8000.csb.app/'
+  The files then come from that server instead of jsDelivr; CSS changes apply live,
+  JS changes after a reload. Turn it off with   delete localStorage.cpsDev
+  If the dev server isn't reachable, the released files are used instead.
 -->
 <pre class="script">template("Custom/Views/PageSettings");</pre>
 <script>
 (function () {
-  var BASE = 'https://cdn.jsdelivr.net/gh/yasharghaemi/test-JS@COMMIT_HASH/pagesetting/dist/';
+  var RELEASE = 'https://cdn.jsdelivr.net/gh/yasharghaemi/test-JS@COMMIT_HASH/pagesetting/dist/';
+  // cpsDev = '1' means this computer; an http(s) address means that dev server.
+  var flag = null;
+  try { flag = localStorage.getItem('cpsDev'); } catch (e) { /* storage blocked */ }
+  var dev = flag === '1' || /^https?:\/\//.test(flag || '');
+  var DEV = /^https?:\/\//.test(flag || '') ? flag.replace(/\/?$/, '/') : 'http://localhost:8000/';
+
   var loaded = false;
+  function add(tag, props) {
+    var node = document.createElement(tag);
+    for (var k in props) node[k] = props[k];
+    document.head.appendChild(node);
+    return node;
+  }
+  function loadFrom(base, min) {
+    var css = add('link', { rel: 'stylesheet', href: base + 'pagesetting' + min + '.css' });
+    var js = add('script', { src: base + 'pagesetting' + min + '.js', async: true });
+    return { css: css, js: js };
+  }
   function load() {
     if (loaded) return;
     loaded = true;
-    var head = document.head;
-    var pre = document.createElement('link');
-    pre.rel = 'preconnect';
-    pre.href = 'https://knitcanvas.fun';
-    pre.crossOrigin = 'anonymous';
-    var css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = BASE + 'pagesetting.min.css';
-    var js = document.createElement('script');
-    js.src = BASE + 'pagesetting.min.js';
-    js.async = true;
-    head.appendChild(pre);
-    head.appendChild(css);
-    head.appendChild(js);
+    add('link', { rel: 'preconnect', href: 'https://knitcanvas.fun', crossOrigin: 'anonymous' });
+    if (!dev) return loadFrom(RELEASE, '.min');
+
+    console.info('[page-settings] dev mode: loading from ' + DEV);
+    var files = loadFrom(DEV, '');
+    files.js.onerror = function () {
+      console.warn('[page-settings] dev server not reachable; using the released files');
+      files.css.remove();
+      loadFrom(RELEASE, '.min');
+    };
+    // Rebuild notices from esbuild: swap in new CSS live; for JS, ask for a reload
+    // (reloading automatically could throw away unsaved edits in the editor).
+    try {
+      new EventSource(DEV + 'esbuild').addEventListener('change', function (e) {
+        var c = JSON.parse(e.data);
+        var changed = c.added.concat(c.removed, c.updated);
+        if (changed.some(function (f) { return /\.css$/.test(f); })) {
+          files.css.href = DEV + 'pagesetting.css?' + Date.now();
+        }
+        if (changed.some(function (f) { return /\.js$/.test(f); })) {
+          console.info('[page-settings] JS rebuilt - reload the page to use it');
+        }
+      });
+    } catch (e) { /* no live updates */ }
   }
+
   if (document.getElementById('mt-summary')) return load();
   var watch = new MutationObserver(function () {
     if (document.getElementById('mt-summary')) {

@@ -38,6 +38,18 @@
 .cps-status { margin-left: auto; font-size: 13px; color: var(--cps-muted); }
 .cps-status[data-kind="ok"] { color: var(--cps-ok); }
 .cps-status[data-kind="error"] { color: var(--cps-error); }
+.cps-toggle-all {
+  padding: 4px 2px; border: 0; background: none;
+  color: var(--cps-accent); font: inherit; font-size: 13px; cursor: pointer;
+}
+.cps-toggle-all:hover { text-decoration: underline; }
+
+/* section cards: wide ones span the grid, the rest pair up on wide screens */
+.cps-groups {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 14px; align-items: start;
+}
+.cps-group-wide { grid-column: 1 / -1; }
 
 .cps-body { display: flex; flex-direction: column; gap: 14px; }
 .cps-note { margin: 0; color: var(--cps-muted); font-style: italic; }
@@ -220,4 +232,5 @@
   .cps-top { flex-direction: column; }
   .cps-thumb { flex-basis: auto; width: 148px; }
   .cps-field { flex-basis: 100%; }
+  .cps-groups { grid-template-columns: 1fr; }
 }

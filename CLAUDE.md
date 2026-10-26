@@ -29,6 +29,14 @@ this GitHub repo through jsDelivr. There is no server code here.
 - `npm run build` — minified, ASCII-only `dist/pagesetting.min.js` (IIFE, ES2019,
   with source map) and `dist/pagesetting.min.css`.
 - `npm run watch` — rebuild the JS on change.
+- `npm run dev` — local dev server at `http://localhost:8000` (unminified
+  `pagesetting.js` / `pagesetting.css`, rebuilt on save, output in git-ignored `.dev/`).
+  The site's loader uses it only in a browser where `localStorage.cpsDev = 1` is set
+  (falls back to the released files if the server isn't running); CSS updates live,
+  JS after a reload. Lets you try changes on the dev site without pushing.
+- `npm run dev:sandbox` — same, listening on `0.0.0.0` for a CodeSandbox Devbox;
+  `.codesandbox/tasks.json` installs and starts it (preview port 8000). Point the
+  loader at it with `localStorage.cpsDev = 'https://<devbox>-8000.csb.app/'`.
 - `npm run typecheck` — `tsc --noEmit`.
 
 Always run `npm run typecheck && npm run build` after editing `src/` or the CSS, and
@@ -73,10 +81,14 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   (`autonumheader:`) and License + version. Unlisted roles get `DEFAULT_VIEW`
   (full). Hidden parts are built but hidden, so their tags are still saved unchanged.
 - **Layout:** thumbnail + summary, then section cards from `GROUPS` — Page type
-  (Article type + guide display), Display & status (Stage, Show Page TOC, Autonumber,
-  Override Autonumber), Attribution Manager, License, Publishing (Cover Page, OER
-  program, Transcluded, Student Analytics), Print (columns, PrintOptions, Print CSS)
-  — then a Tags card. Site-defined settings (`stage:`, `showtoc:`, `autonumheader:`,
+  (Article type + listing display), Display & status (Stage, Show Page TOC,
+  Autonumber, Override Autonumber), License, Attribution Manager, Publishing (Cover
+  Page, OER program, Transcluded, Student Analytics), Print (columns, PrintOptions,
+  Print CSS) — then a Tags card. Cards are an accordion (chosen over tabs: headers
+  show each section's state at a glance) in a `.cps-groups` grid: `wide` cards span
+  it, narrow ones pair up two-across on wide screens, so list narrow cards in pairs
+  between wide ones. The header has Expand all / Collapse all; which cards are open
+  is remembered per browser in localStorage (`OPEN_STATE_KEY`, best-effort). Site-defined settings (`stage:`, `showtoc:`, `autonumheader:`,
   `override:`, `coverpage:`, `program:`, `transcluded:`, `studentanalytics:`,
   `columns:`, `printoptions:`, `cssprint:`) copy the site's options; the ones the site
   marks `recursive` have `askApplyToSubpages: true`. A card hides itself when nothing in it is visible for the role. Field values for these come from the site's

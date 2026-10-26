@@ -1,5 +1,5 @@
 import { putTags } from './api';
-import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, ROLE_VIEWS, type PanelView, fieldPrefixes, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
+import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, OPEN_STATE_KEY, ROLE_VIEWS, type PanelView, fieldPrefixes, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
 import { el } from './dom';
 import { authorField } from './fields/author';
 import { listingField } from './fields/listing';
@@ -40,7 +40,12 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
   toggle.append(toggleIcon, el('span', null, 'Page settings'));
   const status = el('span', 'cps-status');
   status.setAttribute('role', 'status');
-  header.append(toggle, status);
+  // Expand all / Collapse all for the section cards; wired up once they exist.
+  const toggleAll = el('button', 'cps-toggle-all');
+  toggleAll.type = 'button';
+  toggleAll.hidden = true;
+  let refreshToggleAll = () => {};
+  header.append(toggle, status, toggleAll);
 
   const body = el('div', 'cps-body');
   toggle.addEventListener('click', () => {
@@ -48,6 +53,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
     body.hidden = !opening;
     toggle.setAttribute('aria-expanded', String(opening));
     toggleIcon.textContent = opening ? '−' : '+';
+    refreshToggleAll();
   });
   panel.append(header, body);
 
@@ -97,7 +103,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
   // Foldable sections (Page type, Display & status, Attribution Manager, License), in
   // GROUPS order; each header summarises its fields.
   const groups = new Map(GROUPS.map((config): [string, Group] => {
-    const details = el('details', 'cps-group');
+    const details = el('details', config.wide ? 'cps-group cps-group-wide' : 'cps-group');
     const summary = el('summary', 'cps-group-summary');
     const info = el('span', 'cps-group-info');
     summary.append(el('span', null, config.title), info);
@@ -160,7 +166,34 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
   }
   updateGroupSummaries();
   // Authors have few fields, so everything they see starts unfolded.
-  groups.forEach((g) => { g.details.open = view === 'author' || !!g.config.open; });
+  // Open state: what this person last chose (per browser), else the default.
+  // Authors have few fields, so by default everything they see starts unfolded.
+  const openState = readOpenState();
+  groups.forEach((g) => {
+    const stored = openState[g.config.id];
+    let known = typeof stored === 'boolean' ? stored : view === 'author' || !!g.config.open;
+    g.details.open = known;
+    g.details.addEventListener('toggle', () => {
+      refreshToggleAll();
+      if (g.details.open === known) return; // the initial, programmatic open
+      known = g.details.open;
+      openState[g.config.id] = known;
+      writeOpenState(openState);
+    });
+  });
+
+  const visibleGroups = () => [...groups.values()].filter((g) => !g.details.hidden);
+  refreshToggleAll = () => {
+    const visible = visibleGroups();
+    toggleAll.hidden = body.hidden || visible.length < 2;
+    toggleAll.textContent = visible.some((g) => !g.details.open) ? 'Expand all' : 'Collapse all';
+  };
+  toggleAll.addEventListener('click', () => {
+    const visible = visibleGroups();
+    const open = visible.some((g) => !g.details.open);
+    visible.forEach((g) => { g.details.open = open; });
+    refreshToggleAll();
+  });
 
   // --- subpage listing display: depends on the article type; not for authors ---
   const articleState = fieldStates.find((s) => s.field.prefix.toLowerCase() === ARTICLE_PREFIX);
@@ -186,6 +219,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
   function updateSectionVisibility() {
     groups.forEach((g) => { g.details.hidden = !anyVisible(g.grid); });
     row.hidden = !anyVisible(row);
+    refreshToggleAll();
   }
   updateArticleType();
 
@@ -201,6 +235,27 @@ export function buildPanel(page: PageData, fields: FieldConfig[], listingSource:
   }
 
   tagsNode.hidden = view === 'author';
-  body.append(top, row, ...[...groups.values()].map((g) => g.details), tagsNode);
+  // Cards sit in one grid: wide ones span it, the rest pair up on wide screens.
+  const groupsBox = el('div', 'cps-groups');
+  groupsBox.append(...[...groups.values()].map((g) => g.details));
+  body.append(top, row, groupsBox, tagsNode);
   return panel;
+}
+
+// The open-cards memory is only a convenience: storage may be unavailable.
+function readOpenState(): Record<string, boolean> {
+  try {
+    const state = JSON.parse(localStorage.getItem(OPEN_STATE_KEY) || '{}');
+    return state && typeof state === 'object' ? state : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeOpenState(state: Record<string, boolean>): void {
+  try {
+    localStorage.setItem(OPEN_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // private mode, blocked storage, ...: just don't remember
+  }
 }

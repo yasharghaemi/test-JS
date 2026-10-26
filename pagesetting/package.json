@@ -8,7 +8,9 @@
     "build:js": "esbuild src/index.ts --bundle --format=iife --target=es2019 --minify --sourcemap --legal-comments=none --outfile=dist/pagesetting.min.js",
     "build:css": "esbuild pagesetting.css --minify --outfile=dist/pagesetting.min.css",
     "watch": "esbuild src/index.ts --bundle --format=iife --target=es2019 --sourcemap --outfile=dist/pagesetting.min.js --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev": "esbuild src/index.ts pagesetting.css --bundle --format=iife --target=es2019 --sourcemap --entry-names=pagesetting --outdir=.dev --servedir=.dev --serve=localhost:8000 --watch=forever",
+    "dev:sandbox": "esbuild src/index.ts pagesetting.css --bundle --format=iife --target=es2019 --sourcemap --entry-names=pagesetting --outdir=.dev --servedir=.dev --serve=0.0.0.0:8000 --watch=forever"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
