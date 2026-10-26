@@ -29,27 +29,47 @@ export interface FieldConfig {
   askApplyToSubpages?: boolean;
   /** Id of a GROUPS entry: puts the field in that foldable section instead of the main row. */
   group?: string;
-  /** Shown to users with EDITOR_ROLE, who see only these fields. */
-  forEditors?: boolean;
+  /** Shown in the 'author' view, which shows only these fields. */
+  forAuthors?: boolean;
+  /** Hidden in the 'editor' view. */
+  hiddenForEditors?: boolean;
 }
 
 /**
- * MindTouch role (case-insensitive) that gets the reduced panel with only
- * `forEditors` fields. Every other role gets the full panel.
+ * How much of the panel a role sees:
+ * - 'full': everything.
+ * - 'editor': everything except Article type and the Guide listing display.
+ * - 'author': only fields marked `forAuthors`.
+ * Hidden parts are still built, so their tags keep being saved unchanged.
  */
-export const EDITOR_ROLE = 'editor';
+export type PanelView = 'full' | 'editor' | 'author';
 
-/** A foldable section of fields. Starts closed; its header summarises the fields. */
+/** MindTouch role (lower case) -> view. Roles not listed get DEFAULT_VIEW. */
+export const ROLE_VIEWS: Record<string, PanelView> = {
+  admin: 'full',
+  editor: 'editor',
+  author: 'author',
+};
+export const DEFAULT_VIEW: PanelView = 'full';
+
+/** A foldable section (card) of fields; its header summarises the fields. */
 export interface GroupConfig {
   id: string;
   title: string;
   /** 'count' shows "· 3 of 7 set"; 'values' shows the chosen values, e.g. "· CC BY-SA 4.0". */
   summary: 'count' | 'values';
+  /** Start unfolded (authors always see their sections unfolded). */
+  open?: boolean;
 }
 
+// Sections in display order, below the thumbnail and summary and above the tags.
 export const GROUPS: GroupConfig[] = [
+  { id: 'type', title: 'Page type', summary: 'values', open: true },
+  { id: 'display', title: 'Display & status', summary: 'values', open: true },
   { id: 'attribution', title: 'Attribution Manager', summary: 'count' },
   { id: 'license', title: 'License', summary: 'values' },
+  { id: 'publishing', title: 'Publishing', summary: 'values' },
+  { id: 'print', title: 'Print', summary: 'values' },
 ];
 
 // One attribution role: a person search box saving `<prefix><nameKey>`.
@@ -63,7 +83,7 @@ const role = (label: string, prefix: string): FieldConfig => ({
 //   { label: 'Override', prefix: 'override:', options: [['override:yes', 'Yes']] },
 export const FIELDS: FieldConfig[] = [
   {
-    label: 'Article type', prefix: 'article:', options: [
+    label: 'Article type', prefix: 'article:', group: 'type', hiddenForEditors: true, options: [
       ['article:topic-category', 'Book or Unit'],
       ['article:topic-guide', 'Chapter'],
       ['article:topic', 'Section or Page'],
@@ -72,21 +92,82 @@ export const FIELDS: FieldConfig[] = [
     ],
   },
   {
-    label: 'Stage', prefix: 'stage:', forEditors: true, options: [
+    label: 'Stage', prefix: 'stage:', group: 'display', forAuthors: true, options: [
       ['stage:stub', 'Stub'], ['stage:draft', 'Draft'], ['stage:review', 'Review'],
       ['stage:final', 'Final'], ['stage:outdated', 'Outdated'], ['stage:obsolete', 'Obsolete'],
     ],
   },
   {
-    label: 'Show Page TOC', prefix: 'showtoc:', forEditors: true, askApplyToSubpages: true, options: [
+    label: 'Show Page TOC', prefix: 'showtoc:', group: 'display', forAuthors: true, askApplyToSubpages: true, options: [
       ['showtoc:yes', 'yes on page'], ['showtoc:no', 'no on page'],
     ],
   },
   {
-    label: 'Autonumber Section Headings', prefix: 'autonumheader:', forEditors: true, askApplyToSubpages: true, options: [
+    label: 'Autonumber Section Headings', prefix: 'autonumheader:', group: 'display', forAuthors: true, askApplyToSubpages: true, options: [
       ['autonumheader:yes1', 'title with space delimiters'],
       ['autonumheader:yes2', 'title with colon delimiters'],
       ['autonumheader:yes3', 'title with dash delimiters'],
+    ],
+  },
+  {
+    label: 'Override Autonumber', prefix: 'override:', group: 'display', options: [
+      ['override:yes', 'yes'], ['override:no', 'no'],
+    ],
+  },
+  // Publishing and print settings; options and labels match the site's own page settings.
+  // askApplyToSubpages marks the ones the site applies to subpages.
+  {
+    label: 'Cover Page', prefix: 'coverpage:', group: 'publishing', options: [
+      ['coverpage:yes', 'Set Cover Page/Add to Download Center'],
+      ['coverpage:toc', 'Set Cover Page/Not in Download Center'],
+    ],
+  },
+  {
+    label: 'OER program or Publisher', prefix: 'program:', group: 'publishing', askApplyToSubpages: true, options: [
+      ['program:ztccoc', 'College of the Canyons - Zero Textbook Cost Program'],
+      ['program:oeri', 'ASCCC OERI Program'],
+      ['program:ck12', 'CK-12'],
+      ['program:openstax', 'OpenStax'],
+      ['program:galileo', 'GALILEO'],
+      ['program:opensuny', 'OpenSUNY'],
+      ['program:mitocw', 'MIT OpenCourseWare'],
+      ['program:virginiatech', "Virginia Tech Libraries' Open Education Initiative"],
+      ['program:hidden', 'The Publisher Who Must Not Be Named'],
+      ['program:ecampusontario', 'eCampusOntario'],
+      ['program:wac', 'WAC Clearinghouse'],
+      ['program:bcc', 'BC Campus'],
+      ['program:lumen', 'Lumen'],
+      ['program:openoregon', 'Open Oregon'],
+      ['program:openstaxcnx', 'OpenStax CNX'],
+      ['program:pdxopen', 'PDXOpen'],
+      ['program:clc-innovators', 'CLC Innovators'],
+    ],
+  },
+  {
+    label: 'Transcluded', prefix: 'transcluded:', group: 'publishing', askApplyToSubpages: true, options: [
+      ['transcluded:yes', 'yes'],
+    ],
+  },
+  {
+    label: 'Student Analytics', prefix: 'studentanalytics:', group: 'publishing', askApplyToSubpages: true, options: [
+      ['studentanalytics:yes', 'yes'],
+    ],
+  },
+  {
+    label: 'Number of Print Columns', prefix: 'columns:', group: 'print', askApplyToSubpages: true, options: [
+      ['columns:two', 'Two'], ['columns:three', 'Three'],
+    ],
+  },
+  {
+    label: 'PrintOptions', prefix: 'printoptions:', group: 'print', options: [
+      ['printoptions:no-header', 'No Header/Footer'],
+      ['printoptions:no-title', 'No Title'],
+      ['printoptions:no-header-title', 'No Header/Footer/Title'],
+    ],
+  },
+  {
+    label: 'Print CSS', prefix: 'cssprint:', group: 'print', askApplyToSubpages: true, options: [
+      ['cssprint:default', 'Default'], ['cssprint:dense', 'Dense'],
     ],
   },
   role('Author', 'author@'),
@@ -98,7 +179,7 @@ export const FIELDS: FieldConfig[] = [
   role('Reviewer', 'reviewedBy@'),
   {
     label: 'License', prefix: 'license:', versionPrefix: 'licenseversion:', type: 'license',
-    group: 'license', askApplyToSubpages: true, forEditors: true, options: [],
+    group: 'license', askApplyToSubpages: true, forAuthors: true, options: [],
   },
 ];
 

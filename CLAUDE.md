@@ -66,11 +66,20 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   `fieldPrefixes(field)` lists every prefix a field owns.
 - **Editor view:** DekiScript has no `user.role`, so the template reads the role from
   the user's API document: `xml.text(wiki.api(user.api), "//permissions.user/role")`,
-  sent as `userRole` in `#cps-data`. Users whose role is `EDITOR_ROLE` (`editor`,
-  case-insensitive; authors) see only fields with `forEditors: true` — Stage
-  (`stage:`), Show Page TOC (`showtoc:`), Autonumber Section Headings
-  (`autonumheader:`) and License + version. Everything else is built but hidden, so
-  its tags are still saved unchanged. Field values for these come from the site's
+  sent as `userRole` in `#cps-data`. `ROLE_VIEWS` in `config.ts` maps role (lower
+  case) to a view: `admin` → full; `editor` → everything except Article type
+  (`hiddenForEditors`) and the Guide listing display; `author` → only `forAuthors`
+  fields — Stage (`stage:`), Show Page TOC (`showtoc:`), Autonumber Section Headings
+  (`autonumheader:`) and License + version. Unlisted roles get `DEFAULT_VIEW`
+  (full). Hidden parts are built but hidden, so their tags are still saved unchanged.
+- **Layout:** thumbnail + summary, then section cards from `GROUPS` — Page type
+  (Article type + guide display), Display & status (Stage, Show Page TOC, Autonumber,
+  Override Autonumber), Attribution Manager, License, Publishing (Cover Page, OER
+  program, Transcluded, Student Analytics), Print (columns, PrintOptions, Print CSS)
+  — then a Tags card. Site-defined settings (`stage:`, `showtoc:`, `autonumheader:`,
+  `override:`, `coverpage:`, `program:`, `transcluded:`, `studentanalytics:`,
+  `columns:`, `printoptions:`, `cssprint:`) copy the site's options; the ones the site
+  marks `recursive` have `askApplyToSubpages: true`. A card hides itself when nothing in it is visible for the role. Field values for these come from the site's
   own settings, but Attribution and License keep this project's design (`role@key`
   tags, `LICENSES` with matching versions), not MindTouch's default panel.
 - **Thumbnail** follows the Article type via `THUMBNAIL_WIDTHS` in `config.ts`:

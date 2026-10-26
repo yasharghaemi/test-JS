@@ -39,7 +39,7 @@
 .cps-status[data-kind="ok"] { color: var(--cps-ok); }
 .cps-status[data-kind="error"] { color: var(--cps-error); }
 
-.cps-body { display: flex; flex-direction: column; gap: 20px; }
+.cps-body { display: flex; flex-direction: column; gap: 14px; }
 .cps-note { margin: 0; color: var(--cps-muted); font-style: italic; }
 
 .cps-label { display: block; margin-bottom: 6px; font-size: 15px; }
@@ -116,6 +116,9 @@
 .cps-field-pair { display: contents; }
 .cps-select:disabled { background: var(--cps-bg); color: var(--cps-muted); }
 .cps-group-fields .cps-heading { margin: 0 0 4px; padding: 0; font-size: 15px; }
+/* the guide display sits on its own row under Article type */
+.cps-group-fields .cps-guide { grid-column: 1 / -1; }
+.cps-group-fields .cps-guide .cps-heading { margin-bottom: 8px; }
 
 .cps-select,
 .cps-input,
@@ -146,7 +149,12 @@
 .cps-combo-campus { font-size: 12px; color: var(--cps-muted); }
 .cps-combo-msg { padding: 6px 10px; color: var(--cps-muted); font-style: italic; }
 
-/* tags */
+/* tags: a card like the sections above */
+.cps-tags {
+  padding: 10px 14px 14px;
+  border: 1px solid var(--cps-border); border-radius: 3px; background: var(--cps-surface);
+}
+.cps-tags > .cps-heading { padding: 0; margin-bottom: 8px; }
 .cps-tag-adder { position: relative; max-width: 608px; }
 .cps-tag-plus {
   position: absolute; left: 8px; top: 50%; transform: translateY(-50%);

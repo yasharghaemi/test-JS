@@ -1,5 +1,5 @@
 import { putTags } from './api';
-import { ARTICLE_PREFIX, EDITOR_ROLE, GROUPS, fieldPrefixes, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
+import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, ROLE_VIEWS, type PanelView, fieldPrefixes, GUIDE_TABBED_TAG, GUIDE_TAG, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
 import { el, radio } from './dom';
 import { authorField } from './fields/author';
 import { licenseField } from './fields/license';
@@ -76,13 +76,15 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     );
   };
 
-  // Editors (authors) get a reduced panel: only `forEditors` fields. Everything else is
-  // still built, just hidden, so its tags keep being saved unchanged.
-  const limited = page.userRole.trim().toLowerCase() === EDITOR_ROLE;
+  // What this role sees (see ROLE_VIEWS). Hidden parts are still built, so their tags
+  // keep being saved unchanged.
+  const view: PanelView = ROLE_VIEWS[page.userRole.trim().toLowerCase()] ?? DEFAULT_VIEW;
+  const hiddenInView = (field: FieldConfig) =>
+    view === 'author' ? !field.forAuthors : view === 'editor' && !!field.hiddenForEditors;
 
   // --- thumbnail + summary ---
   const top = el('div', 'cps-top');
-  top.hidden = limited;
+  top.hidden = view === 'author';
   const thumbnail = thumbnailField(page, save, setStatus);
   top.append(thumbnail.node, summaryField(page, save));
 
@@ -91,7 +93,8 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
 
   const row = el('div', 'cps-fields');
 
-  // Foldable sections (Attribution Manager, License, ...); closed at first, with a summary.
+  // Foldable sections (Page type, Display & status, Attribution Manager, License), in
+  // GROUPS order; each header summarises its fields.
   const groups = new Map(GROUPS.map((config): [string, Group] => {
     const details = el('details', 'cps-group');
     const summary = el('summary', 'cps-group-summary');
@@ -135,7 +138,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
       : field.type === 'author'
         ? authorField(field, current[0], id, onChange)
         : selectField(field, current[0], id, onChange);
-    if (limited && !field.forEditors) control.node.hidden = true;
+    if (hiddenInView(field)) control.node.hidden = true;
     const state = { field, current: current.filter(Boolean), control };
     const group = field.group ? groups.get(field.group) : undefined;
     if (group) group.states.push(state);
@@ -150,14 +153,16 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
         info.textContent = `· ${set} of ${states.length} set`;
       } else {
         const values = states.map((s) => s.control.display()).filter(Boolean);
-        info.textContent = `· ${values.length ? values.join(' ') : 'not set'}`;
+        info.textContent = `· ${values.length ? values.join(' · ') : 'not set'}`;
       }
     });
   }
   updateGroupSummaries();
   groups.forEach((g) => {
+    // A section with nothing visible for this role disappears.
     g.details.hidden = !g.states.some((s) => !s.control.node.hidden);
-    g.details.open = limited; // editors have few fields, so show them unfolded
+    // Authors have few fields, so everything they see starts unfolded.
+    g.details.open = view === 'author' || !!g.config.open;
   });
 
   // --- guide listing display (only for guides) ---
@@ -173,10 +178,13 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
   const isGuide = () => articleType() === GUIDE_TAG;
   // Guide display and the thumbnail rule both follow the article type.
   function updateGuide() {
-    guide.hidden = limited || !isGuide();
+    guide.hidden = view !== 'full' || !isGuide();
     thumbnail.setArticleType(articleType());
   }
   updateGuide();
+  // The guide display belongs with Article type, in the Page type section.
+  const articleGroup = articleState?.field.group ? groups.get(articleState.field.group) : undefined;
+  (articleGroup ? articleGroup.grid : row).append(guide);
 
   // --- free tags: everything except the tags the fields above hold ---
   const fieldTags = new Set(fieldStates.flatMap((s) => s.current));
@@ -190,7 +198,8 @@ export function buildPanel(page: PageData, fields: FieldConfig[]): HTMLElement {
     return [...new Set(all)];
   }
 
-  tagsNode.hidden = limited;
-  body.append(top, guide, row, ...[...groups.values()].map((g) => g.details), tagsNode);
+  tagsNode.hidden = view === 'author';
+  row.hidden = !Array.from(row.children).some((c) => !(c as HTMLElement).hidden);
+  body.append(top, row, ...[...groups.values()].map((g) => g.details), tagsNode);
   return panel;
 }
