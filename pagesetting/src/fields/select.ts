@@ -25,6 +25,11 @@ export function selectField(field: FieldConfig, current: string, id: string, onC
   };
   fill(); // empty select, so it shows the committed (saved) value
   select.addEventListener('change', onChange);
+  // Detected fields (e.g. Transcluded) are set by the panel, never by hand.
+  if (field.detect) {
+    select.disabled = true;
+    select.title = 'Set automatically from the page content';
+  }
 
   return {
     node: labelled(field.label, select, id),
@@ -33,6 +38,15 @@ export function selectField(field: FieldConfig, current: string, id: string, onC
     committedTags: () => (committed === NOT_SET ? [] : [committed]),
     commit: () => { committed = select.value; },
     revert: () => { select.value = committed; },
+    force: (tag) => {
+      const value = tag || NOT_SET;
+      if (value === committed && select.value === value) return false;
+      committed = value;
+      select.value = '';
+      fill(); // makes sure the option exists, then shows it
+      select.value = value;
+      return true;
+    },
     setOptions: (classifications) => {
       const found = classifications.get(field.prefix.toLowerCase());
       if (!found || sameOptions(found, options)) return;

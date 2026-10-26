@@ -110,6 +110,12 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   MindTouch changes its panel (it may fill it in late); current and committed values
   are kept. **Exceptions:** author fields (authors API) and License (`LICENSES`, with
   its per-license versions) never use classifications.
+- **Transcluded** is set automatically (`"detect": "transclusion"` in
+  `pagesetting.json`): when the panel opens it reads the page's raw source
+  (`/pages/{id}/contents?mode=raw`, `sourceContains` in `api.ts`) and looks for any of
+  `transclusionMarkers` (content-reuse widget `mt-contentreuse-widget` / `wiki.page(`,
+  cross-library `CrossTransclude`). Found → `transcluded:yes`, else the tag is removed;
+  a mismatch is saved right away. The dropdown is read-only (plain "yes"/"(not set)").
 - **Thumbnail** follows the Article type via `thumbnailWidths` in `pagesetting.json`:
   Book or Unit (`article:topic-category`) 500px wide, Chapter (`article:topic-guide`)
   250px; other types have no thumbnail (field hidden unless an old one is left to

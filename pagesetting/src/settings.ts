@@ -68,6 +68,7 @@ export function validateSettings(raw: unknown, base: Settings): { settings: Sett
     if (!optional(f.type, (t) => t === 'select' || t === 'author' || t === 'license')) return `${name} "type" must be "select", "author" or "license"`;
     if (f.type === 'license' && !isString(f.versionPrefix)) return `${name} a license field needs "versionPrefix"`;
     if (!optional(f.group, (g) => isString(g) && groupIds.has(g))) return `${name} "group" must be one of the groups' ids`;
+    if (!optional(f.detect, (d) => d === 'transclusion')) return `${name} "detect" must be "transclusion"`;
     for (const flag of ['askApplyToSubpages', 'forAuthors', 'hiddenForEditors']) {
       if (!optional(f[flag], isBool)) return `${name} "${flag}" must be true or false`;
     }
@@ -87,6 +88,8 @@ export function validateSettings(raw: unknown, base: Settings): { settings: Sett
   take('thumbnailWidths', isObject(raw.thumbnailWidths)
     && Object.values(raw.thumbnailWidths).every((w) => typeof w === 'number' && w > 0)
     ? '' : 'must map article types to a width in px');
+  take('transclusionMarkers', Array.isArray(raw.transclusionMarkers) && raw.transclusionMarkers.every((m) => isString(m) && m)
+    ? '' : 'must be a list of non-empty texts');
 
   // Fields may point at groups that were rejected above: drop that grouping.
   settings.fields = settings.fields.map((f) =>

@@ -47,6 +47,11 @@
                         { '@id': '125' },
                     ] } } });
                 }
+                // Page 123's source uses a cross-library transclusion, so the panel
+                // should set its Transcluded tag to yes.
+                if (/\/pages\/123\/contents\?mode=raw/.test(u)) {
+                    return new Response('<content type="text/html"><body>&lt;pre class="script"&gt;template(\'CrossTransclude/Web\',{\'Library\':\'chem\',\'PageID\':1});&lt;/pre&gt;</body></content>', { status: 200 });
+                }
                 const m = u.match(/\/pages\/(\d+)\/tags/);
                 if (m && method === 'GET') return json({ tag: (tags[m[1]] || []).map((v) => ({ '@value': v })) });
                 if (m && method === 'PUT') {

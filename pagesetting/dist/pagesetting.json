@@ -105,7 +105,7 @@
       "label": "Transcluded",
       "prefix": "transcluded:",
       "group": "publishing",
-      "askApplyToSubpages": true,
+      "detect": "transclusion",
       "options": [
         ["transcluded:yes", "yes"]
       ]
@@ -343,5 +343,6 @@
   "thumbnailWidths": {
     "article:topic-category": 500,
     "article:topic-guide": 250
-  }
+  },
+  "transclusionMarkers": ["mt-contentreuse-widget", "wiki.page(", "CrossTransclude"]
 }

@@ -41,6 +41,11 @@ export interface FieldConfig {
   forAuthors?: boolean;
   /** Hidden in the 'editor' view. */
   hiddenForEditors?: boolean;
+  /**
+   * 'transclusion': the value is set automatically, not by people - "yes" if the
+   * page's source contains one of the transclusionMarkers, otherwise not set.
+   */
+  detect?: 'transclusion';
 }
 
 /**
@@ -81,6 +86,8 @@ export interface LicenseOption {
  * - roleViews / defaultView: MindTouch role (lower case) -> view; others get defaultView.
  * - licenses: licenses and the versions each allows.
  * - thumbnailWidths: thumbnail width (px) per article type; types not listed have none.
+ * - transclusionMarkers: text that marks a page's source as transcluded (for fields
+ *   with "detect": "transclusion"), matched case-insensitively.
  */
 export interface Settings {
   groups: GroupConfig[];
@@ -89,6 +96,7 @@ export interface Settings {
   defaultView: PanelView;
   licenses: LicenseOption[];
   thumbnailWidths: Record<string, number>;
+  transclusionMarkers: string[];
 }
 
 // The settings in use. They start as pagesetting.json as it was at build time, and
@@ -101,9 +109,10 @@ export let ROLE_VIEWS: Record<string, PanelView> = bundled.roleViews;
 export let DEFAULT_VIEW: PanelView = bundled.defaultView;
 export let LICENSES: LicenseOption[] = bundled.licenses;
 export let THUMBNAIL_WIDTHS: Record<string, number> = bundled.thumbnailWidths;
+export let TRANSCLUSION_MARKERS: string[] = bundled.transclusionMarkers;
 
 export function currentSettings(): Settings {
-  return { groups: GROUPS, fields: FIELDS, roleViews: ROLE_VIEWS, defaultView: DEFAULT_VIEW, licenses: LICENSES, thumbnailWidths: THUMBNAIL_WIDTHS };
+  return { groups: GROUPS, fields: FIELDS, roleViews: ROLE_VIEWS, defaultView: DEFAULT_VIEW, licenses: LICENSES, thumbnailWidths: THUMBNAIL_WIDTHS, transclusionMarkers: TRANSCLUSION_MARKERS };
 }
 
 export function applySettings(s: Settings): void {
@@ -113,6 +122,7 @@ export function applySettings(s: Settings): void {
   DEFAULT_VIEW = s.defaultView;
   LICENSES = s.licenses;
   THUMBNAIL_WIDTHS = s.thumbnailWidths;
+  TRANSCLUSION_MARKERS = s.transclusionMarkers;
 }
 
 /** Every tag prefix a field owns: its own, plus the version prefix for a license field. */

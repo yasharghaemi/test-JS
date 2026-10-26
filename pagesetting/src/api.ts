@@ -86,6 +86,16 @@ export async function putProperty(pageId: number, name: string, text: string): P
   });
 }
 
+/**
+ * Whether the page's saved source (raw, before templates run) contains any of the
+ * markers, matched case-insensitively. The markers avoid quotes and angle brackets,
+ * so it doesn't matter that the source comes back HTML-escaped inside XML.
+ */
+export async function sourceContains(pageId: number, markers: string[]): Promise<boolean> {
+  const source = (await (await deki('GET', `/pages/${pageId}/contents?mode=raw`)).text()).toLowerCase();
+  return markers.some((m) => source.includes(m.toLowerCase()));
+}
+
 /** IDs of every page below pageId, at any depth. */
 export async function getDescendantIds(pageId: number): Promise<string[]> {
   const ids = new Set<string>();

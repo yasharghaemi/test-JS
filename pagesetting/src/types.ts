@@ -35,6 +35,8 @@ export interface FieldControl {
   revert(): void;
   /** Take options from the site's classifications, if it has some for this field. */
   setOptions?(classifications: Classifications): void;
+  /** Set and commit a value decided by the panel, not a person ('' = not set). Returns whether it changed. */
+  force?(tag: string): boolean;
 }
 
 export type StatusKind = 'ok' | 'error' | '';

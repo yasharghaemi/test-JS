@@ -1,5 +1,5 @@
-import { putTags } from './api';
-import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, OPEN_STATE_KEY, ROLE_VIEWS, type PanelView, fieldPrefixes, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
+import { putTags, sourceContains } from './api';
+import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, OPEN_STATE_KEY, ROLE_VIEWS, TRANSCLUSION_MARKERS, type PanelView, fieldPrefixes, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
 import { el } from './dom';
 import { authorField } from './fields/author';
 import { listingField } from './fields/listing';
@@ -250,6 +250,16 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
   }
 
   tagsNode.hidden = view === 'author';
+
+  // Detected fields: "yes" if the page source shows transclusion, otherwise not set.
+  // If the saved tag doesn't match, fix it right away.
+  fieldStates.filter((s) => s.field.detect === 'transclusion').forEach((s) => {
+    sourceContains(page.id, TRANSCLUSION_MARKERS).then((transcluded) => {
+      if (!s.control.force?.(transcluded ? `${s.field.prefix}yes` : '')) return;
+      updateGroupSummaries();
+      save(() => putTags(page.id, collectTags()));
+    }, (err) => console.warn('[page-settings] could not check the page for transclusion', err));
+  });
   // Cards sit in one grid: wide ones span it, the rest pair up on wide screens.
   const groupsBox = el('div', 'cps-groups');
   groupsBox.append(...[...groups.values()].map((g) => g.details));
