@@ -26,7 +26,10 @@ export function confirmDialog({ title, message, confirmText, cancelText, checkbo
   const heading = el('h2', 'cps-dialog-title', title);
   heading.id = 'cps-dialog-title';
   dialog.setAttribute('aria-labelledby', heading.id);
-  dialog.append(heading, el('p', 'cps-dialog-message', message));
+  const text = el('p', 'cps-dialog-message', message);
+  text.id = 'cps-dialog-message';
+  dialog.setAttribute('aria-describedby', text.id); // read along with the title
+  dialog.append(heading, text);
 
   let box: HTMLInputElement | null = null;
   if (checkbox) {

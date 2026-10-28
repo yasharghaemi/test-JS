@@ -17,8 +17,12 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
   const input = el('input', 'cps-input');
   input.id = id;
   // "—" reads as "not set"; the hint appears once the box is focused.
-  Object.assign(input, { type: 'text', autocomplete: 'off', spellcheck: false, placeholder: '—' });
-  input.addEventListener('focus', () => { input.placeholder = 'Search people…'; });
+  // No placeholder while blurred: an empty box shows a visual-only "—" (screen readers
+  // would read a "—" placeholder as "em dash"; they say "blank" instead).
+  Object.assign(input, { type: 'text', autocomplete: 'off', spellcheck: false });
+  const dash = el('span', 'cps-combo-dash', '—');
+  dash.setAttribute('aria-hidden', 'true');
+  input.addEventListener('focus', () => { input.placeholder = 'Search people…'; dash.hidden = true; });
   setAttrs(input, {
     role: 'combobox',
     'aria-autocomplete': 'list',
@@ -31,14 +35,16 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
   const list = el('ul', 'cps-combo-list');
   list.id = listId;
   list.setAttribute('role', 'listbox');
+  list.setAttribute('aria-label', `${field.label} suggestions`);
   list.hidden = true;
   const live = el('div', 'cps-sr-only');
   live.setAttribute('aria-live', 'polite');
-  wrap.append(input, clear, list, live);
+  wrap.append(input, dash, clear, list, live);
 
   const show = () => {
     input.value = name;
     clear.hidden = !name;
+    dash.hidden = !!name || document.activeElement === input;
   };
   show();
 
@@ -154,7 +160,7 @@ export function authorField(field: FieldConfig, current: string, id: string, onC
     }
   });
   // Don't leave half-typed text that looks like a saved value.
-  input.addEventListener('blur', () => { close(); show(); input.placeholder = '—'; });
+  input.addEventListener('blur', () => { close(); show(); input.placeholder = ''; dash.hidden = !!name; });
   clear.addEventListener('click', () => {
     value = '';
     name = '';

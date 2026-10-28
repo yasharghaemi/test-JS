@@ -130,6 +130,7 @@ html.cps-active #mt-summary { display: none !important; }
 /* live-tag fields */
 .cps-fields { display: flex; flex-wrap: wrap; gap: 16px 26px; }
 .cps-field { flex: 0 1 298px; min-width: 200px; }
+.cps-field-note { display: block; margin-top: 4px; font-size: 12px; color: var(--cps-muted); }
 
 /* foldable field sections (Attribution, License) */
 .cps-group {
@@ -147,6 +148,8 @@ html.cps-active #mt-summary { display: none !important; }
 /* "\2212" is the minus sign, escaped so the file stays ASCII-safe */
 .cps-group[open] > .cps-group-summary::before { content: '\2212'; }
 .cps-group-info { color: var(--cps-muted); font-size: 14px; }
+/* card titles are real headings (screen-reader navigation) but look like before */
+.cps-group-title { margin: 0; padding: 0; font: inherit; color: inherit; }
 /* as many fields per row as fit, each with its label above its control */
 .cps-group-fields {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -183,6 +186,11 @@ html.cps-active #mt-summary { display: none !important; }
 
 /* author combobox */
 .cps-combo { position: relative; }
+/* visual-only "not set" dash in an empty, unfocused author box */
+.cps-combo-dash {
+  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  color: var(--cps-muted); pointer-events: none;
+}
 .cps-combo .cps-input { padding-right: 28px; }
 .cps-combo-clear {
   position: absolute; right: 4px; top: 50%; transform: translateY(-50%);

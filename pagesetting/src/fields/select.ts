@@ -26,13 +26,17 @@ export function selectField(field: FieldConfig, current: string, id: string, onC
   fill(); // empty select, so it shows the committed (saved) value
   select.addEventListener('change', onChange);
   // Detected fields (e.g. Transcluded) are set by the panel, never by hand.
+  const node = labelled(field.label, select, id);
   if (field.detect) {
     select.disabled = true;
-    select.title = 'Set automatically from the page content';
+    const note = el('span', 'cps-field-note', 'Set automatically from the page content');
+    note.id = `${id}-note`;
+    select.setAttribute('aria-describedby', note.id);
+    node.append(note);
   }
 
   return {
-    node: labelled(field.label, select, id),
+    node,
     tags: () => (select.value === NOT_SET ? [] : [select.value]),
     display: () => (select.value === NOT_SET ? '' : select.selectedOptions[0]?.textContent?.trim() || ''),
     committedTags: () => (committed === NOT_SET ? [] : [committed]),

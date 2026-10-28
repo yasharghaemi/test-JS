@@ -49,6 +49,8 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
   header.append(toggle, status, toggleAll);
 
   const body = el('div', 'cps-body');
+  body.id = 'cps-body';
+  toggle.setAttribute('aria-controls', body.id);
   toggle.addEventListener('click', () => {
     const opening = body.hidden;
     body.hidden = !opening;
@@ -106,8 +108,10 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
   const groups = new Map(GROUPS.map((config): [string, Group] => {
     const details = el('details', config.wide ? 'cps-group cps-group-wide' : 'cps-group');
     const summary = el('summary', 'cps-group-summary');
+    // A heading per card so screen-reader users can jump between sections.
+    const title = el('h3', 'cps-group-title', config.title);
     const info = el('span', 'cps-group-info');
-    summary.append(el('span', null, config.title), info);
+    summary.append(title, info);
     const grid = el('div', 'cps-group-fields');
     details.append(summary, grid);
     return [config.id, { config, details, info, grid, states: [] }];
@@ -156,13 +160,14 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
 
   function updateGroupSummaries() {
     groups.forEach(({ config, info, states }) => {
-      if (config.summary === 'count') {
-        const set = states.filter((s) => s.control.tags().length).length;
-        info.textContent = `· ${set} of ${states.length} set`;
-      } else {
-        const values = states.map((s) => s.control.display()).filter(Boolean);
-        info.textContent = `· ${values.length ? values.join(' · ') : 'not set'}`;
-      }
+      const parts = config.summary === 'count'
+        ? [`${states.filter((s) => s.control.tags().length).length} of ${states.length} set`]
+        : states.map((s) => s.control.display()).filter(Boolean);
+      if (!parts.length) parts.push('not set');
+      // Show "· a · b", but have screen readers say ", a, b" (no "dot").
+      const shown = el('span', null, `· ${parts.join(' · ')}`);
+      shown.setAttribute('aria-hidden', 'true');
+      info.replaceChildren(shown, el('span', 'cps-sr-only', `, ${parts.join(', ')}`));
     });
   }
   updateGroupSummaries();

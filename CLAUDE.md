@@ -162,4 +162,10 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   (2.5.3 Label in Name: the summary preview uses a hidden "Edit summary: " prefix
   instead). Don't make a counter that changes per keystroke `aria-live`; announce
   only meaningful changes (the summary announces near/at/over the limit).
+  Screen readers: card titles are `<h3>` inside `<summary>`; visual separators like
+  "·" are `aria-hidden` with a spoken `cps-sr-only` version; the confirm dialog has
+  `aria-labelledby` (title) + `aria-describedby` (message); author listboxes are named
+  "<Role> suggestions"; an empty author box shows an `aria-hidden` "—" instead of a
+  placeholder; explanations go in visible notes linked with `aria-describedby`, not
+  `title`. Not yet verified with a real screen reader (NVDA/VoiceOver).
 - Nothing here has automated tests; verify UI changes in `pagesetting/demo.html`.
