@@ -1,4 +1,4 @@
-import { putOverview } from '../api';
+import { getOverview, putOverview } from '../api';
 import { SUMMARY_MAX_LENGTH } from '../config';
 import { el } from '../dom';
 import type { PageData, Save } from '../types';
@@ -127,7 +127,18 @@ export function summaryField(page: PageData, save: Save): HTMLElement {
   ok.addEventListener('click', commit);
   cancel.addEventListener('click', close);
 
-  showPreview();
+  // Load the current summary from the API (not from the template). Until it's here,
+  // the preview can't be opened, so nobody edits over a summary that hasn't loaded.
+  view.disabled = true;
+  viewText.textContent = 'Loading summary…';
+  viewText.classList.add('cps-summary-empty');
+  getOverview(page.id).then(
+    (text) => { saved = text; },
+    (err) => console.warn('[page-settings] could not load the summary', err),
+  ).then(() => {
+    view.disabled = false;
+    showPreview();
+  });
   return wrap;
 }
 

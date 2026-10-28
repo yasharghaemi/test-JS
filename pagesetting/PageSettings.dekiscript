@@ -15,7 +15,6 @@
 if (!user.anonymous) {
     // page.tags is a map keyed by tag name on some versions, a list on others.
     var tagList = page.tags is map ? map.values(page.tags) : (page.tags ?? []);
-    var overview = page.properties["mindtouch.page#overview"];
     var thumbnail = page.files["mindtouch.page#thumbnail"];
     // The user object has no role property; the user's API document (user.api,
     // e.g. /@api/deki/users/3) has it at <user><permissions.user><role>.
@@ -26,7 +25,6 @@ if (!user.anonymous) {
     var settings = {
         pageId: page.id,
         apiUrl: page.api,
-        summary: overview ? overview.text : "",
         thumbnail: thumbnail ? thumbnail.uri : "",
         tags: [ t.name foreach var t in tagList ],
         // the role picks the panel view (ROLE_VIEWS in config.ts)

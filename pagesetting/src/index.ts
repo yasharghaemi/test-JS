@@ -39,8 +39,9 @@ function mount(original: HTMLElement, data: HTMLElement) {
   const settings = parseSettings(data.textContent || '');
   const page: PageData = {
     id: Number(settings.pageId) || 0,
-    summary: String(settings.summary || ''),
-    thumbnail: String(settings.thumbnail || ''),
+    // The summary is loaded from the API by the summary field (fields/summary.ts).
+    summary: '',
+    thumbnail: plainText(settings.thumbnail),
     tags: Array.isArray(settings.tags) ? settings.tags.map(String).filter(Boolean) : [],
     userRole: String(settings.userRole || ''),
   };
@@ -59,6 +60,13 @@ function mount(original: HTMLElement, data: HTMLElement) {
   // ...and if MindTouch sets an inline style of its own (even !important), hide again.
   new MutationObserver(hide).observe(original, { attributes: true, attributeFilter: ['style'] });
   original.setAttribute('aria-hidden', 'true');
+}
+
+// A text value from the template, or '' if it isn't real text: on some MindTouch
+// versions a property like `.text` is a function, and json.emit writes it out as
+// "function text() { [native code] }".
+function plainText(value: unknown): string {
+  return typeof value === 'string' && !/\[native code\]/.test(value) ? value : '';
 }
 
 function parseSettings(json: string): Record<string, unknown> {

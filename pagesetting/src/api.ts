@@ -70,6 +70,17 @@ export async function replaceFieldTags(pageId: number | string, prefixes: string
   await putTags(pageId, result);
 }
 
+/** The page summary (overview property); '' if the page has none. */
+export async function getOverview(pageId: number): Promise<string> {
+  const res = await fetch(`${DEKI}/pages/${pageId}/properties/${enc(OVERVIEW_PROPERTY)}`, {
+    credentials: 'same-origin',
+    headers: DEKI_HEADERS,
+  });
+  if (res.status === 404) return '';
+  if (!res.ok) throw new Error(`GET overview: HTTP ${res.status}`);
+  return res.text();
+}
+
 export function putOverview(pageId: number, text: string): Promise<Response> {
   return putProperty(pageId, OVERVIEW_PROPERTY, text);
 }
