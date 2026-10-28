@@ -112,9 +112,12 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   MindTouch changes its panel (it may fill it in late); current and committed values
   are kept. **Exceptions:** author fields (authors API) and License (`LICENSES`, with
   its per-license versions) never use classifications.
-- **Summary** is limited to `summaryMaxLength` (500, MindTouch's limit for the summary
-  meta tag): the textarea's `maxLength` plus an "n / 500" counter; an older, longer
-  summary isn't saved again until it's shortened.
+- **Summary** (`fields/summary.ts`) has a preview card (click/Enter to edit, pencil
+  on hover) and an editor with Save / Cancel (Ctrl/Cmd+Enter saves, Esc cancels); it
+  saves only on Save, never while typing. Limited to `summaryMaxLength` (500,
+  MindTouch's limit for the summary meta tag): `maxLength` plus an "n / 500" counter;
+  Save stays disabled while unchanged or over the limit (an older, longer summary must
+  be shortened first). A failed save reopens the editor with the text kept.
 - **Transcluded** is set automatically (`"detect": "transclusion"` in
   `pagesetting.json`): when the panel opens it reads the page's raw source
   (`/pages/{id}/contents?mode=raw`, `sourceContains` in `api.ts`) and looks for any of

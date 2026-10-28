@@ -138,7 +138,6 @@ export function fieldPrefixes(field: FieldConfig): string[] {
 export const OPEN_STATE_KEY = 'cps-open-groups';
 
 export const TAG_SAVE_DELAY_MS = 600;
-export const SUMMARY_SAVE_DELAY_MS = 1500;
 export const AUTHOR_LIMIT = 10;
 export const AUTHOR_MIN_CHARS = 2;
 export const AUTHOR_DEBOUNCE_MS = 250;
