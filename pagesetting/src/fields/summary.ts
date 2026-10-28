@@ -18,11 +18,14 @@ export function summaryField(page: PageData, save: Save): HTMLElement {
   const view = el('button', 'cps-summary-view');
   view.type = 'button';
   view.setAttribute('aria-describedby', label.id);
+  // Name = hidden "Edit summary: " + the visible text, so the words on screen are part
+  // of the accessible name (WCAG 2.5.3 Label in Name). No aria-label on purpose.
+  const viewPrefix = el('span', 'cps-sr-only', 'Edit summary: ');
   const viewText = el('span', 'cps-summary-text');
   const pencil = el('span', 'cps-summary-pencil');
   pencil.setAttribute('aria-hidden', 'true');
   pencil.append(pencilIcon());
-  view.append(viewText, pencil);
+  view.append(viewPrefix, viewText, pencil);
 
   // --- editor ---
   const editor = el('div', 'cps-summary-editor');
@@ -35,7 +38,10 @@ export function summaryField(page: PageData, save: Save): HTMLElement {
   const bar = el('div', 'cps-summary-bar');
   const count = el('span', 'cps-summary-count');
   count.id = 'cps-summary-count';
-  count.setAttribute('aria-live', 'polite');
+  // Screen readers hear the counter only when it matters (near / at / over the limit),
+  // not on every keystroke (WCAG 4.1.3 without the noise).
+  const announce = el('span', 'cps-sr-only');
+  announce.setAttribute('aria-live', 'polite');
   area.setAttribute('aria-describedby', count.id);
   const cancel = el('button', 'cps-btn', 'Cancel');
   cancel.type = 'button';
@@ -43,18 +49,29 @@ export function summaryField(page: PageData, save: Save): HTMLElement {
   ok.type = 'button';
   const actions = el('div', 'cps-summary-actions');
   actions.append(cancel, ok);
-  bar.append(count, actions);
+  bar.append(count, actions, announce);
   editor.append(area, bar);
 
   wrap.append(label, view, editor);
 
   let saved = page.summary;
   const over = () => area.value.length > SUMMARY_MAX_LENGTH;
+  const nearAt = Math.ceil(SUMMARY_MAX_LENGTH * 0.1); // announce from 10% left
+  let level = '';
+  const announceLevel = () => {
+    const left = SUMMARY_MAX_LENGTH - area.value.length;
+    const next = left < 0 ? 'over' : left === 0 ? 'full' : left <= nearAt ? 'near' : 'ok';
+    if (next === level) return;
+    level = next;
+    announce.textContent = next === 'over' ? `Too long: shorten to ${SUMMARY_MAX_LENGTH} characters to save`
+      : next === 'full' ? `Character limit of ${SUMMARY_MAX_LENGTH} reached`
+        : next === 'near' ? `${left} character${left === 1 ? '' : 's'} left` : '';
+  };
 
   const showPreview = () => {
     viewText.textContent = saved || 'Add page summary';
     viewText.classList.toggle('cps-summary-empty', !saved);
-    view.setAttribute('aria-label', saved ? 'Edit summary' : 'Add page summary');
+    viewPrefix.hidden = !saved; // when empty, "Add page summary" already says it
     editor.hidden = true;
     view.hidden = false;
   };
@@ -64,9 +81,12 @@ export function summaryField(page: PageData, save: Save): HTMLElement {
       ? `${area.value.length} / ${SUMMARY_MAX_LENGTH} - shorten to ${SUMMARY_MAX_LENGTH} to save`
       : `${area.value.length} / ${SUMMARY_MAX_LENGTH}`;
     ok.disabled = over() || area.value === saved;
+    announceLevel();
   };
   const edit = () => {
     area.value = saved;
+    level = 'ok'; // reset: a summary that opens near/over the limit is announced once
+    announce.textContent = '';
     updateEditor();
     view.hidden = true;
     editor.hidden = false;

@@ -156,4 +156,10 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   (incl. `chapter-sample`) is in `.document/` (git-ignored).
 - Authors API: `https://knitcanvas.fun/api/v1/authors/search?q=<q>&limit=<n>` →
   `{ err, authors: [{ nameKey, name, campusName, isGroup }] }`.
+- **Accessibility (WCAG 2.2 AA):** keep text at 4.5:1 and UI edges/icons at 3:1. The
+  accent is `#1565c0` (old `#1e88e5` failed), "Saved" green `#256b29`, summary card
+  border `#8a8a8a`. Don't put `aria-label` on a button whose visible text differs
+  (2.5.3 Label in Name: the summary preview uses a hidden "Edit summary: " prefix
+  instead). Don't make a counter that changes per keystroke `aria-live`; announce
+  only meaningful changes (the summary announces near/at/over the limit).
 - Nothing here has automated tests; verify UI changes in `pagesetting/demo.html`.
