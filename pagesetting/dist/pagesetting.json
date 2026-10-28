@@ -71,34 +71,10 @@
       "label": "Cover Page",
       "prefix": "coverpage:",
       "group": "publishing",
+      "hiddenForEditors": true,
       "options": [
         ["coverpage:yes", "Set Cover Page/Add to Download Center"],
         ["coverpage:toc", "Set Cover Page/Not in Download Center"]
-      ]
-    },
-    {
-      "label": "OER program or Publisher",
-      "prefix": "program:",
-      "group": "publishing",
-      "askApplyToSubpages": true,
-      "options": [
-        ["program:ztccoc", "College of the Canyons - Zero Textbook Cost Program"],
-        ["program:oeri", "ASCCC OERI Program"],
-        ["program:ck12", "CK-12"],
-        ["program:openstax", "OpenStax"],
-        ["program:galileo", "GALILEO"],
-        ["program:opensuny", "OpenSUNY"],
-        ["program:mitocw", "MIT OpenCourseWare"],
-        ["program:virginiatech", "Virginia Tech Libraries' Open Education Initiative"],
-        ["program:hidden", "The Publisher Who Must Not Be Named"],
-        ["program:ecampusontario", "eCampusOntario"],
-        ["program:wac", "WAC Clearinghouse"],
-        ["program:bcc", "BC Campus"],
-        ["program:lumen", "Lumen"],
-        ["program:openoregon", "Open Oregon"],
-        ["program:openstaxcnx", "OpenStax CNX"],
-        ["program:pdxopen", "PDXOpen"],
-        ["program:clc-innovators", "CLC Innovators"]
       ]
     },
     {
@@ -127,16 +103,6 @@
       "options": [
         ["columns:two", "Two"],
         ["columns:three", "Three"]
-      ]
-    },
-    {
-      "label": "PrintOptions",
-      "prefix": "printoptions:",
-      "group": "print",
-      "options": [
-        ["printoptions:no-header", "No Header/Footer"],
-        ["printoptions:no-title", "No Title"],
-        ["printoptions:no-header-title", "No Header/Footer/Title"]
       ]
     },
     {
@@ -344,5 +310,10 @@
     "article:topic-category": 500,
     "article:topic-guide": 250
   },
-  "transclusionMarkers": ["mt-contentreuse-widget", "wiki.page(", "CrossTransclude"]
+  "transclusionMarkers": [
+    "mt-contentreuse-widget",
+    "wiki.page(",
+    "CrossTransclude"
+  ],
+  "summaryMaxLength": 500
 }

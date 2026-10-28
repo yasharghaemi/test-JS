@@ -92,14 +92,16 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
 - **Layout:** thumbnail + summary, then section cards from `GROUPS` — Page type
   (Article type + listing display), Display & status (Stage, Show Page TOC,
   Autonumber, Override Autonumber), License, Attribution Manager, Publishing (Cover
-  Page, OER program, Transcluded, Student Analytics), Print (columns, PrintOptions,
-  Print CSS) — then a Tags card. Cards are an accordion (chosen over tabs: headers
+  Page — admins only via `hiddenForEditors`, Transcluded, Student Analytics), Print
+  (columns, Print CSS) — then a Tags card. PrintOptions (Shapeshift handles it) and
+  OER program (it's in Conductor) were removed on purpose; their old tags just show in
+  the Tags card. Cards are an accordion (chosen over tabs: headers
   show each section's state at a glance) in a `.cps-groups` grid: `wide` cards span
   it, narrow ones pair up two-across on wide screens, so list narrow cards in pairs
   between wide ones. The header has Expand all / Collapse all; which cards are open
   is remembered per browser in localStorage (`OPEN_STATE_KEY`, best-effort). Site-defined settings (`stage:`, `showtoc:`, `autonumheader:`,
-  `override:`, `coverpage:`, `program:`, `transcluded:`, `studentanalytics:`,
-  `columns:`, `printoptions:`, `cssprint:`) copy the site's options; the ones the site
+  `override:`, `coverpage:`, `transcluded:`, `studentanalytics:`, `columns:`,
+  `cssprint:`) copy the site's options; the ones the site
   marks `recursive` have `askApplyToSubpages: true`. A card hides itself when nothing in it is visible for the role. Field values for these come from the site's
   own settings, but Attribution and License keep this project's design (`role@key`
   tags, `LICENSES` with matching versions), not MindTouch's default panel.
@@ -110,6 +112,9 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   MindTouch changes its panel (it may fill it in late); current and committed values
   are kept. **Exceptions:** author fields (authors API) and License (`LICENSES`, with
   its per-license versions) never use classifications.
+- **Summary** is limited to `summaryMaxLength` (500, MindTouch's limit for the summary
+  meta tag): the textarea's `maxLength` plus an "n / 500" counter; an older, longer
+  summary isn't saved again until it's shortened.
 - **Transcluded** is set automatically (`"detect": "transclusion"` in
   `pagesetting.json`): when the panel opens it reads the page's raw source
   (`/pages/{id}/contents?mode=raw`, `sourceContains` in `api.ts`) and looks for any of

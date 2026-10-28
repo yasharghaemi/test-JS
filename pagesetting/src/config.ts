@@ -88,6 +88,7 @@ export interface LicenseOption {
  * - thumbnailWidths: thumbnail width (px) per article type; types not listed have none.
  * - transclusionMarkers: text that marks a page's source as transcluded (for fields
  *   with "detect": "transclusion"), matched case-insensitively.
+ * - summaryMaxLength: most characters the summary may have (MindTouch allows 500).
  */
 export interface Settings {
   groups: GroupConfig[];
@@ -97,6 +98,7 @@ export interface Settings {
   licenses: LicenseOption[];
   thumbnailWidths: Record<string, number>;
   transclusionMarkers: string[];
+  summaryMaxLength: number;
 }
 
 // The settings in use. They start as pagesetting.json as it was at build time, and
@@ -110,9 +112,10 @@ export let DEFAULT_VIEW: PanelView = bundled.defaultView;
 export let LICENSES: LicenseOption[] = bundled.licenses;
 export let THUMBNAIL_WIDTHS: Record<string, number> = bundled.thumbnailWidths;
 export let TRANSCLUSION_MARKERS: string[] = bundled.transclusionMarkers;
+export let SUMMARY_MAX_LENGTH: number = bundled.summaryMaxLength;
 
 export function currentSettings(): Settings {
-  return { groups: GROUPS, fields: FIELDS, roleViews: ROLE_VIEWS, defaultView: DEFAULT_VIEW, licenses: LICENSES, thumbnailWidths: THUMBNAIL_WIDTHS, transclusionMarkers: TRANSCLUSION_MARKERS };
+  return { groups: GROUPS, fields: FIELDS, roleViews: ROLE_VIEWS, defaultView: DEFAULT_VIEW, licenses: LICENSES, thumbnailWidths: THUMBNAIL_WIDTHS, transclusionMarkers: TRANSCLUSION_MARKERS, summaryMaxLength: SUMMARY_MAX_LENGTH };
 }
 
 export function applySettings(s: Settings): void {
@@ -123,6 +126,7 @@ export function applySettings(s: Settings): void {
   LICENSES = s.licenses;
   THUMBNAIL_WIDTHS = s.thumbnailWidths;
   TRANSCLUSION_MARKERS = s.transclusionMarkers;
+  SUMMARY_MAX_LENGTH = s.summaryMaxLength;
 }
 
 /** Every tag prefix a field owns: its own, plus the version prefix for a license field. */

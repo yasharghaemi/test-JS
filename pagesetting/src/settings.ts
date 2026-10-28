@@ -90,6 +90,8 @@ export function validateSettings(raw: unknown, base: Settings): { settings: Sett
     ? '' : 'must map article types to a width in px');
   take('transclusionMarkers', Array.isArray(raw.transclusionMarkers) && raw.transclusionMarkers.every((m) => isString(m) && m)
     ? '' : 'must be a list of non-empty texts');
+  take('summaryMaxLength', Number.isInteger(raw.summaryMaxLength) && (raw.summaryMaxLength as number) > 0
+    ? '' : 'must be a whole number above 0');
 
   // Fields may point at groups that were rejected above: drop that grouping.
   settings.fields = settings.fields.map((f) =>
