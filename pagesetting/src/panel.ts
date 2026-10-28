@@ -75,8 +75,11 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
     setStatus('Saving…');
     queue = queue.then(task).then(
       (result) => {
+        // Only a real SaveResult ({ text: string, kind }) sets its own message. Most
+        // tasks resolve to a fetch Response, whose .text is a function - don't show it.
         const r = result as SaveResult;
-        if (r) setStatus(r.text, r.kind); else setStatus('Saved', 'ok');
+        if (r && typeof r.text === 'string') setStatus(r.text, r.kind);
+        else setStatus('Saved', 'ok');
       },
       (err) => {
         console.warn('[page-settings]', err);

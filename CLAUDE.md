@@ -67,10 +67,12 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   `credentials: 'same-origin'`, so the session cookie authenticates them.
 - **DekiScript reads `-` as subtraction** in XML-literal attribute names, so no
   `data-*` attributes there. Emit data as JSON text (`json.emit(...)`) instead.
-- **DekiScript property values can be functions:** `page.properties[…].text` emitted
-  `function text() { [native code] }` instead of the text. So the summary is not sent
-  by the template; `fields/summary.ts` loads it from the API (`getOverview`), and
-  `index.ts` drops any template value containing `[native code]` (`plainText`).
+- **Save tasks resolve to a fetch `Response`**, whose `.text` is a function. The save
+  queue in `panel.ts` only shows a task's own message when it's a real `SaveResult`
+  (`typeof text === 'string'`); otherwise "Saved". (Getting this wrong showed
+  `function text() { [native code] }` in the status line.) The summary is loaded from
+  the API (`getOverview` in `fields/summary.ts`), not sent by the template, and
+  `index.ts` ignores any template value containing `[native code]` (`plainText`).
 - **Tag conventions:** a field's value is the first page tag starting with its
   `prefix` (prefix includes the separator, e.g. `article:`, `author@`). Other tags
   matching the prefix stay in the free tag list. Author is stored as
