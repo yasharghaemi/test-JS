@@ -137,8 +137,8 @@ html.cps-active #mt-summary { display: none !important; }
   border: 1px solid var(--cps-border); border-radius: 3px; background: var(--cps-surface);
 }
 .cps-group-summary {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px; font-size: 17px; cursor: pointer; list-style: none;
+  display: flex; align-items: baseline; gap: 8px; /* title and info share a text line */
+  padding: 10px 14px; font-size: 17px; line-height: 1.4; cursor: pointer; list-style: none;
 }
 .cps-group-summary::-webkit-details-marker { display: none; }
 .cps-group-summary::before {
@@ -149,7 +149,13 @@ html.cps-active #mt-summary { display: none !important; }
 .cps-group[open] > .cps-group-summary::before { content: '\2212'; }
 .cps-group-info { color: var(--cps-muted); font-size: 14px; }
 /* card titles are real headings (screen-reader navigation) but look like before */
-.cps-group-title { margin: 0; padding: 0; font: inherit; color: inherit; }
+/* Specific enough to beat the site's own h3 styles (size, margins, line height). */
+.cps-panel .cps-group-summary .cps-group-title {
+  margin: 0; padding: 0; border: 0; border-bottom: 0;
+  font: inherit; font-family: inherit; font-size: inherit; line-height: inherit;
+  font-weight: 400; color: inherit;
+  letter-spacing: normal; text-transform: none;
+}
 /* as many fields per row as fit, each with its label above its control */
 .cps-group-fields {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
