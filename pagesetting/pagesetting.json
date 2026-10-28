@@ -3,7 +3,7 @@
     { "id": "type", "title": "Page type", "summary": "values", "open": true, "wide": true },
     { "id": "display", "title": "Display & status", "summary": "values", "open": true },
     { "id": "license", "title": "License", "summary": "values" },
-    { "id": "attribution", "title": "Attribution Manager", "summary": "count", "wide": true },
+    { "id": "attribution", "title": "Attribution", "summary": "count", "wide": true },
     { "id": "publishing", "title": "Publishing", "summary": "values" },
     { "id": "print", "title": "Print", "summary": "values" }
   ],

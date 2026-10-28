@@ -102,7 +102,7 @@ html.cps-active #mt-summary { display: none !important; }
 .cps-fields { display: flex; flex-wrap: wrap; gap: 16px 26px; }
 .cps-field { flex: 0 1 298px; min-width: 200px; }
 
-/* foldable field sections (Attribution Manager, License) */
+/* foldable field sections (Attribution, License) */
 .cps-group {
   border: 1px solid var(--cps-border); border-radius: 3px; background: var(--cps-surface);
 }

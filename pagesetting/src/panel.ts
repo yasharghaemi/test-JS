@@ -101,7 +101,7 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
 
   const row = el('div', 'cps-fields');
 
-  // Foldable sections (Page type, Display & status, Attribution Manager, License), in
+  // Foldable sections (Page type, Display & status, Attribution, License), in
   // GROUPS order; each header summarises its fields.
   const groups = new Map(GROUPS.map((config): [string, Group] => {
     const details = el('details', config.wide ? 'cps-group cps-group-wide' : 'cps-group');

@@ -91,7 +91,7 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   (full). Hidden parts are built but hidden, so their tags are still saved unchanged.
 - **Layout:** thumbnail + summary, then section cards from `GROUPS` — Page type
   (Article type + listing display), Display & status (Stage, Show Page TOC,
-  Autonumber, Override Autonumber), License, Attribution Manager, Publishing (Cover
+  Autonumber, Override Autonumber), License, Attribution, Publishing (Cover
   Page — admins only via `hiddenForEditors`, Transcluded, Student Analytics), Print
   (columns, Print CSS) — then a Tags card. PrintOptions (Shapeshift handles it) and
   OER program (it's in Conductor) were removed on purpose; their old tags just show in
@@ -125,7 +125,7 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   Book or Unit (`article:topic-category`) 500px wide, Chapter (`article:topic-guide`)
   250px; other types have no thumbnail (field hidden unless an old one is left to
   remove). Uploads are scaled down in the browser (`src/image.ts`, never upscaled).
-- **Attribution Manager** (foldable `<details>`, starts closed): one person per role,
+- **Attribution** (foldable `<details>`, starts closed): one person per role,
   stored as `author@`, `editor@`, `remixer@`, `translator@`, `contributor@`,
   `illustrator@`, `reviewedBy@` (Reviewer) + `<nameKey>`. Roles are `FIELDS` entries
   with `group: 'attribution'` and `askApplyToSubpages: true`. A change to such a
