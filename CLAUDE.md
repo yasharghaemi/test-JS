@@ -95,19 +95,18 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   fields — Stage (`stage:`), Show Page TOC (`showtoc:`), Autonumber Section Headings
   (`autonumheader:`) and License + version. Unlisted roles get `DEFAULT_VIEW`
   (full). Hidden parts are built but hidden, so their tags are still saved unchanged.
-- **Layout:** thumbnail + summary, then section cards from `GROUPS` — Page type
-  (Article type + listing display), Display & status (Stage, Show Page TOC,
-  Autonumber, Override Autonumber), License, Attribution, Publishing (Cover
-  Page — admins only via `hiddenForEditors`, Transcluded, Student Analytics), Print
-  (columns, Print CSS) — then a Tags card. PrintOptions (Shapeshift handles it) and
-  OER program (it's in Conductor) were removed on purpose; their old tags just show in
-  the Tags card. Cards are an accordion (chosen over tabs: headers
+- **Layout (compact):** thumbnail + summary, then section cards from `GROUPS` in rows:
+  Page type (Article type + listing display) + Display & status (Stage, Show Page TOC,
+  Autonumber, Override Autonumber); License + Publishing (Cover Page — admins only via
+  `hiddenForEditors`, Transcluded, Student Analytics); Attribution (full row); then
+  the Tags card (full row). Removed on purpose: the whole Print section (columns,
+  Print CSS), PrintOptions (Shapeshift handles it) and OER program (it's in
+  Conductor); their old tags just show in the Tags card. Cards are an accordion (chosen over tabs: headers
   show each section's state at a glance) in a `.cps-groups` grid: `wide` cards span
   it, narrow ones pair up two-across on wide screens, so list narrow cards in pairs
   between wide ones. The header has Expand all / Collapse all; which cards are open
   is remembered per browser in localStorage (`OPEN_STATE_KEY`, best-effort). Site-defined settings (`stage:`, `showtoc:`, `autonumheader:`,
-  `override:`, `coverpage:`, `transcluded:`, `studentanalytics:`, `columns:`,
-  `cssprint:`) copy the site's options; the ones the site
+  `override:`, `coverpage:`, `transcluded:`, `studentanalytics:`) copy the site's options; the ones the site
   marks `recursive` have `askApplyToSubpages: true`. A card hides itself when nothing in it is visible for the role. Field values for these come from the site's
   own settings, but Attribution and License keep this project's design (`role@key`
   tags, `LICENSES` with matching versions), not MindTouch's default panel.
@@ -163,8 +162,11 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
 - Authors API: `https://knitcanvas.fun/api/v1/authors/search?q=<q>&limit=<n>` →
   `{ err, authors: [{ nameKey, name, campusName, isGroup }] }`.
 - **Accessibility (WCAG 2.2 AA):** keep text at 4.5:1 and UI edges/icons at 3:1. The
-  accent is `#1565c0` (old `#1e88e5` failed), "Saved" green `#256b29`, summary card
-  border `#8a8a8a`. Don't put `aria-label` on a button whose visible text differs
+  accent is `#1565c0` (old `#1e88e5` failed), "Saved" green `#256b29`; inputs,
+  selects, chips and the summary card use `--cps-field-border` `#8a8a8a` (3.45:1; the
+  old `#c8c8c8` failed). Every clickable control is at least 24x24px (2.5.8): chip
+  "x", thumbnail "x", author clear "x", "Expand all". When compacting, shrink spacing,
+  not text below 12px or targets below 24px. Don't put `aria-label` on a button whose visible text differs
   (2.5.3 Label in Name: the summary preview uses a hidden "Edit summary: " prefix
   instead). Don't make a counter that changes per keystroke `aria-live`; announce
   only meaningful changes (the summary announces near/at/over the limit).
