@@ -50,9 +50,14 @@ html.cps-active #mt-summary { display: none !important; }
 .cps-toggle-all:hover { text-decoration: underline; }
 
 /* section cards: wide ones span the grid, the rest pair up on wide screens */
+/* Exactly two columns: Page type + Display & status, License + Publishing; wide cards
+   (Attribution) take a whole row. One column on narrow screens (see below). */
 .cps-groups {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px; align-items: start;
+}
+@media (max-width: 760px) {
+  .cps-groups { grid-template-columns: 1fr; }
 }
 .cps-group-wide { grid-column: 1 / -1; }
 
@@ -152,7 +157,9 @@ html.cps-active #mt-summary { display: none !important; }
 /* card titles are real headings (screen-reader navigation) but look like before */
 /* Specific enough to beat the site's own h3 styles (size, margins, line height). */
 .cps-panel .cps-group-summary .cps-group-title {
-  margin: 0; padding: 0; border: 0; border-bottom: 0;
+  /* !important: the site's h3 margin (1rem) comes from a more specific rule
+     (e.g. an id selector) that a class selector can't beat. */
+  margin: 0 !important; padding: 0; border: 0; border-bottom: 0;
   font: inherit; font-family: inherit; font-size: inherit; line-height: inherit;
   font-weight: 400; color: inherit;
   letter-spacing: normal; text-transform: none;
@@ -284,5 +291,4 @@ html.cps-active #mt-summary { display: none !important; }
   .cps-top { flex-direction: column; }
   .cps-thumb { flex-basis: auto; width: 128px; }
   .cps-field { flex-basis: 100%; }
-  .cps-groups { grid-template-columns: 1fr; }
 }
