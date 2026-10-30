@@ -242,6 +242,10 @@ html.cps-active #mt-summary { display: none !important; }
 .cps-tag-input { height: 32px; padding-left: 30px; }
 
 .cps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+/* several people for one role (Book attribution): their chips above the search box */
+.cps-people-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; padding: 0; list-style: none; }
+.cps-people-chips .cps-chip { max-width: 100%; }
+.cps-people-chips .cps-chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cps-chip {
   display: inline-flex; align-items: center; gap: 6px;
   height: 30px; padding: 0 10px 0 3px;

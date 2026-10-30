@@ -2,6 +2,7 @@ import { putTags, sourceContains } from './api';
 import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, OPEN_STATE_KEY, ROLE_VIEWS, TRANSCLUSION_MARKERS, type PanelView, fieldPrefixes, TAG_SAVE_DELAY_MS, type FieldConfig, type GroupConfig } from './config';
 import { el } from './dom';
 import { authorField } from './fields/author';
+import { peopleField } from './fields/people';
 import { listingField } from './fields/listing';
 import { licenseField } from './fields/license';
 import { selectField } from './fields/select';
@@ -121,8 +122,11 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
   }));
 
   const fieldStates = fields.map((field, i): FieldState => {
-    // For each prefix the field owns, the first matching tag ('' if none).
-    const current = fieldPrefixes(field).map((p) => page.tags.find((t) => hasPrefix(t, p)) || '');
+    // For each prefix the field owns, the first matching tag ('' if none) - or, for a
+    // multi-person field, every matching tag.
+    const current = field.multiple
+      ? page.tags.filter((t) => hasPrefix(t, field.prefix))
+      : fieldPrefixes(field).map((p) => page.tags.find((t) => hasPrefix(t, p)) || '');
     const id = `cps-field-${i}`;
     const onChange = () => {
       updateArticleType();
@@ -150,7 +154,9 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
     };
     const control: FieldControl = field.type === 'license'
       ? licenseField(field, current, id, onChange)
-      : field.type === 'author'
+      : field.type === 'author' && field.multiple
+        ? peopleField(field, current, id, onChange)
+        : field.type === 'author'
         ? authorField(field, current[0], id, onChange)
         : selectField(field, current[0], id, onChange);
     if (hiddenInView(field)) control.node.hidden = true;
@@ -240,7 +246,12 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
     return Array.from(parent.children).some((c) => !(c as HTMLElement).hidden);
   }
   function updateSectionVisibility() {
-    groups.forEach((g) => { g.details.hidden = !anyVisible(g.grid); });
+    // ...and a section limited to some article types (articleTypes) hides on others.
+    const type = articleType();
+    groups.forEach((g) => {
+      const forType = !g.config.articleTypes || g.config.articleTypes.includes(type);
+      g.details.hidden = !forType || !anyVisible(g.grid);
+    });
     row.hidden = !anyVisible(row);
     refreshToggleAll();
   }

@@ -56,6 +56,7 @@ export function validateSettings(raw: unknown, base: Settings): { settings: Sett
     if (!isString(g.id) || !isString(g.title)) return 'needs "id" and "title" text';
     if (g.summary !== 'count' && g.summary !== 'values') return '"summary" must be "count" or "values"';
     if (!optional(g.open, isBool) || !optional(g.wide, isBool)) return '"open"/"wide" must be true or false';
+    if (!optional(g.articleTypes, (t) => Array.isArray(t) && t.every(isString))) return '"articleTypes" must be a list of article tags';
     return '';
   }));
 
@@ -69,6 +70,7 @@ export function validateSettings(raw: unknown, base: Settings): { settings: Sett
     if (f.type === 'license' && !isString(f.versionPrefix)) return `${name} a license field needs "versionPrefix"`;
     if (!optional(f.group, (g) => isString(g) && groupIds.has(g))) return `${name} "group" must be one of the groups' ids`;
     if (!optional(f.detect, (d) => d === 'transclusion')) return `${name} "detect" must be "transclusion"`;
+    if (f.multiple !== undefined && (f.type !== 'author' || !isBool(f.multiple))) return `${name} "multiple" must be true or false, on an "author" field`;
     for (const flag of ['askApplyToSubpages', 'forAuthors', 'hiddenForEditors']) {
       if (!optional(f[flag], isBool)) return `${name} "${flag}" must be true or false`;
     }

@@ -46,6 +46,8 @@ export interface FieldConfig {
    * page's source contains one of the transclusionMarkers, otherwise not set.
    */
   detect?: 'transclusion';
+  /** Author fields only: several people, one tag each (e.g. every Book Author). */
+  multiple?: boolean;
 }
 
 /**
@@ -67,6 +69,8 @@ export interface GroupConfig {
   open?: boolean;
   /** Span the full width; other cards pair up two-across on wide screens. */
   wide?: boolean;
+  /** Only shown for these article types (e.g. Book attribution on Book or Unit pages). */
+  articleTypes?: string[];
 }
 
 export interface LicenseOption {

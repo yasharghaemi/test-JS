@@ -4,7 +4,16 @@
     { "id": "display", "title": "Display & status", "summary": "values", "open": true },
     { "id": "license", "title": "License", "summary": "values" },
     { "id": "publishing", "title": "Publishing", "summary": "values" },
-    { "id": "attribution", "title": "Attribution", "summary": "count", "wide": true }
+    { "id": "attribution", "title": "Attribution", "summary": "count", "wide": true },
+    {
+      "id": "bookattribution",
+      "title": "Book attribution",
+      "summary": "count",
+      "wide": true,
+      "articleTypes": [
+        "article:topic-category"
+      ]
+    }
   ],
   "fields": [
     {
@@ -66,7 +75,6 @@
         ["autonumheader:yes3", "title with dash delimiters"]
       ]
     },
-   
     {
       "label": "Cover Page",
       "prefix": "coverpage:",
@@ -149,6 +157,62 @@
       "type": "author",
       "group": "attribution",
       "askApplyToSubpages": true,
+      "options": []
+    },
+    {
+      "label": "Book Author",
+      "prefix": "bookauthor@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
+      "options": []
+    },
+    {
+      "label": "Book Editor",
+      "prefix": "bookeditor@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
+      "options": []
+    },
+    {
+      "label": "Book Remixer",
+      "prefix": "bookremixer@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
+      "options": []
+    },
+    {
+      "label": "Book Translator",
+      "prefix": "booktranslator@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
+      "options": []
+    },
+    {
+      "label": "Book Contributor",
+      "prefix": "bookcontributor@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
+      "options": []
+    },
+    {
+      "label": "Book Illustrator",
+      "prefix": "bookillustrator@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
+      "options": []
+    },
+    {
+      "label": "Book Reviewer",
+      "prefix": "bookreviewedBy@",
+      "type": "author",
+      "group": "bookattribution",
+      "multiple": true,
       "options": []
     },
     {

@@ -141,6 +141,14 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   Save, plus an "Also apply to the N subpages" checkbox when there are subpages.
   Fields keep a committed value (`FieldControl.commit/revert/committedValue`); tag
   saves use only committed values. Dialogs are queued so they never stack.
+- **Book attribution** (group `bookattribution`, `"articleTypes": ["article:topic-category"]`)
+  is shown only on Book or Unit pages, to admins and editors. Same seven roles as
+  Attribution with a `book` prefix (`bookauthor@`, `bookeditor@`, `bookremixer@`,
+  `booktranslator@`, `bookcontributor@`, `bookillustrator@`, `bookreviewedBy@`), but each
+  is `"multiple": true` (`fields/people.ts`): several people, one tag each, shown as
+  removable chips; saved straight away on the book page only (no subpage dialog).
+  Single- and multi-person author fields share the search box in
+  `fields/authorSearch.ts`.
 - MindTouch API quirks: names containing `#` are double-encoded in paths
   (`util.enc`, e.g. `mindtouch.page%2523overview`); JSON responses give a single
   object instead of a one-item array (`asArray` in `api.ts`); updating an existing
