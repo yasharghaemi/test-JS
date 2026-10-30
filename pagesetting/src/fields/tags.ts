@@ -1,4 +1,4 @@
-import { el } from '../dom';
+import { el, tagLink } from '../dom';
 
 /** Free-form tag chips. Mutates `tags` in place and calls onChange after each edit. */
 export function tagsField(tags: string[], onChange: () => void): HTMLElement {
@@ -27,7 +27,7 @@ export function tagsField(tags: string[], onChange: () => void): HTMLElement {
         onChange();
         input.focus();
       });
-      li.append(remove, el('span', 'cps-chip-text', tag));
+      li.append(remove, tagLink(tag, tag));
       return li;
     }));
   };

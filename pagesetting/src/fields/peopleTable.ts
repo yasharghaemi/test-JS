@@ -1,6 +1,6 @@
 import { findAuthor } from '../authors';
 import type { FieldConfig } from '../config';
-import { el } from '../dom';
+import { el, tagLink } from '../dom';
 import type { FieldControl } from '../types';
 import { authorSearch } from './authorSearch';
 
@@ -108,7 +108,7 @@ export function peopleTable(caption: string, idBase: string): PeopleTable {
           role.onChange();
         });
         const badge = el('li', 'cps-chip');
-        badge.append(remove, el('span', 'cps-chip-text', p.name));
+        badge.append(remove, tagLink(p.tag, p.name));
         badges.append(badge);
       });
       const people = el('td', 'cps-people-name');

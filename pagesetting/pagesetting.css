@@ -283,7 +283,12 @@ html.cps-active #mt-summary { display: none !important; }
   font-size: 20px; line-height: 1; cursor: pointer;
 }
 .cps-chip-remove:hover { color: var(--cps-error); }
+/* badge text links to the site's tag search (new tab); accent 5.75:1 on white */
+.cps-panel .cps-chip-link { color: var(--cps-accent); text-decoration: none; }
+.cps-panel .cps-chip-link:hover,
+.cps-panel .cps-chip-link:focus-visible { text-decoration: underline; }
 
+.cps-panel a:focus-visible,
 .cps-panel button:focus-visible,
 .cps-panel input:focus-visible,
 .cps-panel select:focus-visible,

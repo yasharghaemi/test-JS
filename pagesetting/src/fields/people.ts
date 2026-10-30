@@ -1,6 +1,6 @@
 import { findAuthor } from '../authors';
 import type { FieldConfig } from '../config';
-import { el, labelled } from '../dom';
+import { el, labelled, tagLink } from '../dom';
 import type { FieldControl } from '../types';
 import { authorSearch } from './authorSearch';
 
@@ -36,7 +36,7 @@ export function peopleField(field: FieldConfig, current: string[], id: string, o
         onChange();
         search.input.focus();
       });
-      li.append(remove, el('span', 'cps-chip-text', p.name));
+      li.append(remove, tagLink(p.tag, p.name));
       return li;
     }));
     chips.hidden = !people.length;

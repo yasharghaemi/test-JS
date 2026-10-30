@@ -157,6 +157,10 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   so saving/summaries work unchanged; header summary `"people"` ("· 6 people").
   `fields/people.ts` (chips) remains for `multiple` fields outside a table. Single-
   and multi-person author fields share the search box in `fields/authorSearch.ts`.
+- **Badges link to the tag search:** every badge (people in Attribution / Book
+  attribution, chips in the Tags card) is a link (`tagLink` in `dom.ts`) to
+  `{site}/Special:Search?tags=<tag, URL-encoded>&type=wiki&query=`, opening in a new
+  tab so unsaved editor work isn't lost (screen readers hear "opens in a new tab").
 - MindTouch API quirks: names containing `#` are double-encoded in paths
   (`util.enc`, e.g. `mindtouch.page%2523overview`); JSON responses give a single
   object instead of a one-item array (`asArray` in `api.ts`); updating an existing
