@@ -64,13 +64,15 @@ export interface GroupConfig {
   id: string;
   title: string;
   /** 'count' shows "· 3 of 7 set"; 'values' shows the chosen values, e.g. "· CC BY-SA 4.0". */
-  summary: 'count' | 'values';
+  summary: 'count' | 'values' | 'people';
   /** Start unfolded (authors always see their sections unfolded). */
   open?: boolean;
   /** Span the full width; other cards pair up two-across on wide screens. */
   wide?: boolean;
   /** Only shown for these article types (e.g. Book attribution on Book or Unit pages). */
   articleTypes?: string[];
+  /** 'table': its multi-person author fields form one table with a single add row. */
+  layout?: 'table';
 }
 
 export interface LicenseOption {

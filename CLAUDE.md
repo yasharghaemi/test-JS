@@ -144,11 +144,15 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
 - **Book attribution** (group `bookattribution`, `"articleTypes": ["article:topic-category"]`)
   is shown only on Book or Unit pages, to admins and editors. Same seven roles as
   Attribution with a `book` prefix (`bookauthor@`, `bookeditor@`, `bookremixer@`,
-  `booktranslator@`, `bookcontributor@`, `bookillustrator@`, `bookreviewedBy@`), but each
-  is `"multiple": true` (`fields/people.ts`): several people, one tag each, shown as
-  removable chips; saved straight away on the book page only (no subpage dialog).
-  Single- and multi-person author fields share the search box in
-  `fields/authorSearch.ts`.
+  `booktranslator@`, `bookcontributor@`, `bookillustrator@`, `bookreviewedBy@`), each
+  `"multiple": true` (several people, one tag each), saved straight away on the book
+  page only. The group has `"layout": "table"` (`fields/peopleTable.ts`): one real
+  `<table>` (sr-only caption, Role | Person | Remove headers) with a row per person,
+  and one add row - pick a Role, search a Person; adds/removes/duplicates are
+  announced. Each role still gets its own `FieldControl` (hidden placeholder node),
+  so saving/summaries work unchanged; header summary `"people"` ("· 6 people").
+  `fields/people.ts` (chips) remains for `multiple` fields outside a table. Single-
+  and multi-person author fields share the search box in `fields/authorSearch.ts`.
 - MindTouch API quirks: names containing `#` are double-encoded in paths
   (`util.enc`, e.g. `mindtouch.page%2523overview`); JSON responses give a single
   object instead of a one-item array (`asArray` in `api.ts`); updating an existing

@@ -54,7 +54,8 @@ export function validateSettings(raw: unknown, base: Settings): { settings: Sett
   take('groups', firstProblem(raw.groups, (g) => {
     if (!isObject(g)) return 'must be an object';
     if (!isString(g.id) || !isString(g.title)) return 'needs "id" and "title" text';
-    if (g.summary !== 'count' && g.summary !== 'values') return '"summary" must be "count" or "values"';
+    if (g.summary !== 'count' && g.summary !== 'values' && g.summary !== 'people') return '"summary" must be "count", "values" or "people"';
+    if (!optional(g.layout, (l) => l === 'table')) return '"layout" must be "table"';
     if (!optional(g.open, isBool) || !optional(g.wide, isBool)) return '"open"/"wide" must be true or false';
     if (!optional(g.articleTypes, (t) => Array.isArray(t) && t.every(isString))) return '"articleTypes" must be a list of article tags';
     return '';

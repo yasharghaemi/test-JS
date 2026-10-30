@@ -8,8 +8,9 @@
     {
       "id": "bookattribution",
       "title": "Book attribution",
-      "summary": "count",
+      "summary": "people",
       "wide": true,
+      "layout": "table",
       "articleTypes": [
         "article:topic-category"
       ]

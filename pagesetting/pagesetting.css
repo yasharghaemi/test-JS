@@ -244,6 +244,28 @@ html.cps-active #mt-summary { display: none !important; }
 .cps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
 /* several people for one role (Book attribution): their chips above the search box */
 .cps-people-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; padding: 0; list-style: none; }
+
+/* People table (group "layout": "table", e.g. Book attribution): a row per person,
+   then one add row (role + person search). */
+.cps-group-fields .cps-people-table { grid-column: 1 / -1; }
+.cps-people-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cps-people-table th {
+  padding: 4px 8px; text-align: left; font-weight: 600; font-size: 13px;
+  color: var(--cps-muted); border-bottom: 1px solid var(--cps-field-border);
+}
+.cps-people-table td { padding: 3px 8px; border-bottom: 1px solid var(--cps-border); vertical-align: middle; }
+.cps-people-role { width: 34%; color: var(--cps-muted); }
+.cps-people-name { color: var(--cps-text); overflow-wrap: anywhere; }
+.cps-people-remove-col { width: 40px; text-align: right; }
+.cps-people-empty { padding: 8px; color: var(--cps-muted); font-style: italic; }
+.cps-people-add {
+  display: grid; grid-template-columns: minmax(140px, 34%) minmax(0, 1fr);
+  gap: 8px; align-items: end; margin-top: 10px;
+}
+.cps-people-add .cps-heading { margin: 0 0 4px; padding: 0; font-size: 13px; color: var(--cps-muted); }
+@media (max-width: 600px) {
+  .cps-people-add { grid-template-columns: 1fr; } /* role above search */
+}
 .cps-people-chips .cps-chip { max-width: 100%; }
 .cps-people-chips .cps-chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cps-chip {

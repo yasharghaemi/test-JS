@@ -3,6 +3,7 @@ import { ARTICLE_PREFIX, DEFAULT_VIEW, GROUPS, OPEN_STATE_KEY, ROLE_VIEWS, TRANS
 import { el } from './dom';
 import { authorField } from './fields/author';
 import { peopleField } from './fields/people';
+import { peopleTable, type PeopleTable } from './fields/peopleTable';
 import { listingField } from './fields/listing';
 import { licenseField } from './fields/license';
 import { selectField } from './fields/select';
@@ -121,6 +122,18 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
     return [config.id, { config, details, info, grid, states: [] }];
   }));
 
+  // Groups with "layout": "table" show their multi-person author fields as one table.
+  const tables = new Map<string, PeopleTable>();
+  const tableFor = (group: Group) => {
+    let table = tables.get(group.config.id);
+    if (!table) {
+      table = peopleTable(group.config.title, `cps-${group.config.id}`);
+      tables.set(group.config.id, table);
+      group.grid.append(table.node);
+    }
+    return table;
+  };
+
   const fieldStates = fields.map((field, i): FieldState => {
     // For each prefix the field owns, the first matching tag ('' if none) - or, for a
     // multi-person field, every matching tag.
@@ -152,7 +165,11 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
         if (ids.length) save(() => applyToSubpages(ids, field, tags, (text) => setStatus(text)));
       });
     };
-    const control: FieldControl = field.type === 'license'
+    const group = field.group ? groups.get(field.group) : undefined;
+    const inTable = !!group && group.config.layout === 'table' && field.type === 'author' && !!field.multiple;
+    const control: FieldControl = inTable
+      ? tableFor(group!).addRole(field, current, onChange)
+      : field.type === 'license'
       ? licenseField(field, current, id, onChange)
       : field.type === 'author' && field.multiple
         ? peopleField(field, current, id, onChange)
@@ -161,16 +178,23 @@ export function buildPanel(page: PageData, fields: FieldConfig[], mindtouchPanel
         : selectField(field, current[0], id, onChange);
     if (hiddenInView(field)) control.node.hidden = true;
     const state = { field, current: current.filter(Boolean), control };
-    const group = field.group ? groups.get(field.group) : undefined;
     if (group) group.states.push(state);
     (group ? group.grid : row).append(control.node);
     return state;
   });
 
+  // A table is hidden when its role fields are all hidden for this view (e.g. authors).
+  tables.forEach((table, id) => {
+    table.node.hidden = groups.get(id)!.states.every((s) => hiddenInView(s.field));
+  });
+
   function updateGroupSummaries() {
     groups.forEach(({ config, info, states }) => {
+      const people = states.reduce((n, s) => n + s.control.tags().length, 0);
       const parts = config.summary === 'count'
         ? [`${states.filter((s) => s.control.tags().length).length} of ${states.length} set`]
+        : config.summary === 'people'
+        ? (people ? [`${people} ${people === 1 ? 'person' : 'people'}`] : [])
         : states.map((s) => s.control.display()).filter(Boolean);
       if (!parts.length) parts.push('not set');
       // Show "· a · b", but have screen readers say ", a, b" (no "dot").
