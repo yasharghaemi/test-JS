@@ -53,10 +53,20 @@ export function putTags(pageId: number | string, tags: string[]): Promise<Respon
  * first tag with that prefix by the new tag with that prefix, adds it if none
  * matched, or removes the old one when `newTags` has none for it.
  */
-export async function replaceFieldTags(pageId: number | string, prefixes: string[], newTags: string[]): Promise<void> {
+export async function replaceFieldTags(
+  pageId: number | string,
+  prefixes: string[],
+  newTags: string[],
+  /** Multi-person field: replace every tag with the prefix by all of newTags. */
+  all = false,
+): Promise<void> {
   const tags = await getTags(pageId);
-  const next = [...tags];
+  let next = [...tags];
   for (const prefix of prefixes) {
+    if (all) {
+      next = [...next.filter((t) => !hasPrefix(t, prefix)), ...newTags.filter((t) => hasPrefix(t, prefix))];
+      continue;
+    }
     const tag = newTags.find((t) => hasPrefix(t, prefix)) || '';
     const i = next.findIndex((t) => hasPrefix(t, prefix));
     if (i >= 0) {

@@ -133,14 +133,17 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   Book or Unit (`article:topic-category`) 500px wide, Chapter (`article:topic-guide`)
   250px; other types have no thumbnail (field hidden unless an old one is left to
   remove). Uploads are scaled down in the browser (`src/image.ts`, never upscaled).
-- **Attribution** (foldable `<details>`, starts closed): one person per role,
-  stored as `author@`, `editor@`, `remixer@`, `translator@`, `contributor@`,
-  `illustrator@`, `reviewedBy@` (Reviewer) + `<nameKey>`. Roles are `FIELDS` entries
-  with `group: 'attribution'` and `askApplyToSubpages: true`. A change to such a
-  field is **not saved until confirmed**: the dialog has Cancel (reverts the field) /
-  Save, plus an "Also apply to the N subpages" checkbox when there are subpages.
-  Fields keep a committed value (`FieldControl.commit/revert/committedValue`); tag
-  saves use only committed values. Dialogs are queued so they never stack.
+- **Attribution** (foldable, starts closed) uses the same people table as Book
+  attribution (`"layout": "table"`, `"summary": "people"`, `fields/peopleTable.ts`):
+  one row per role, several people per role as badges (`"multiple": true`), stored as
+  `author@`, `editor@`, `remixer@`, `translator@`, `contributor@`, `illustrator@`,
+  `reviewedBy@` (Reviewer) + `<nameKey>`, one tag per person. Unlike Book attribution
+  these have `askApplyToSubpages: true`: every add/remove is **not saved until
+  confirmed** (Cancel reverts it and returns focus to the search box; Save can also
+  apply to all subpages). For a multi-person field, applying to subpages replaces
+  *every* tag with that prefix on each subpage (`replaceFieldTags(…, all)`). Fields
+  keep a committed value (`FieldControl.commit/revert/committedTags`); tag saves use
+  only committed values. Dialogs are queued so they never stack.
 - **Book attribution** (group `bookattribution`, `"articleTypes": ["article:topic-category"]`)
   is shown only on Book or Unit pages, to admins and editors. Same seven roles as
   Attribution with a `book` prefix (`bookauthor@`, `bookeditor@`, `bookremixer@`,

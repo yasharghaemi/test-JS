@@ -4,7 +4,7 @@
     { "id": "display", "title": "Display & status", "summary": "values", "open": true },
     { "id": "license", "title": "License", "summary": "values" },
     { "id": "publishing", "title": "Publishing", "summary": "values" },
-    { "id": "attribution", "title": "Attribution", "summary": "count", "wide": true },
+    { "id": "attribution", "title": "Attribution", "summary": "people", "wide": true, "layout": "table" },
     {
       "id": "bookattribution",
       "title": "Book attribution",
@@ -109,6 +109,7 @@
       "prefix": "author@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },
@@ -117,6 +118,7 @@
       "prefix": "editor@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },
@@ -125,6 +127,7 @@
       "prefix": "remixer@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },
@@ -133,6 +136,7 @@
       "prefix": "translator@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },
@@ -141,6 +145,7 @@
       "prefix": "contributor@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },
@@ -149,6 +154,7 @@
       "prefix": "illustrator@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },
@@ -157,6 +163,7 @@
       "prefix": "reviewedBy@",
       "type": "author",
       "group": "attribution",
+      "multiple": true,
       "askApplyToSubpages": true,
       "options": []
     },

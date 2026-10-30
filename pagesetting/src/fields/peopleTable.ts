@@ -169,8 +169,12 @@ export function peopleTable(caption: string, idBase: string): PeopleTable {
         committedTags: () => role.committed.map((p) => p.tag),
         commit: () => { role.committed = [...role.people]; },
         revert: () => {
+          // Cancelled (e.g. in the subpage dialog): the rebuilt rows replace any badge
+          // button that had focus, so keep focus in the table via the search box.
+          const hadFocus = node.contains(document.activeElement) || document.activeElement === document.body;
           role.people = [...role.committed];
           render();
+          if (hadFocus) search.input.focus();
         },
       };
     },

@@ -68,7 +68,7 @@ export async function applyToSubpages(ids: string[], field: FieldConfig, tags: s
   onProgress(`Updating subpages 0/${ids.length}…`);
   await runPool(ids, SUBPAGE_CONCURRENCY, async (id) => {
     try {
-      await replaceFieldTags(id, fieldPrefixes(field), tags);
+      await replaceFieldTags(id, fieldPrefixes(field), tags, !!field.multiple);
     } catch (err) {
       failed++;
       console.warn(`[page-settings] could not update subpage ${id}`, err);
