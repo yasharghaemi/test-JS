@@ -96,8 +96,8 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   (`autonumheader:`) and License + version. Unlisted roles get `DEFAULT_VIEW`
   (full). Hidden parts are built but hidden, so their tags are still saved unchanged.
 - **Layout (compact):** thumbnail + summary, then section cards from `GROUPS` in rows:
-  Page type (Article type + listing display) + Display & status (Stage, Show Page TOC,
-  Autonumber, Override Autonumber); License + Publishing (Cover Page — admins only via
+  Page type (Article type + listing display) + Display & status (Stage, Show Page TOC, Override
+  Autonumber, Autonumber Section Headings); License + Publishing (Cover Page — admins only via
   `hiddenForEditors`, Transcluded, Student Analytics); Attribution (full row); then
   the Tags card (full row). Removed on purpose: the whole Print section (columns,
   Print CSS), PrintOptions (Shapeshift handles it) and OER program (it's in

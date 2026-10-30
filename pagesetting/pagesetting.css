@@ -60,6 +60,9 @@ html.cps-active #mt-summary { display: none !important; }
   .cps-groups { grid-template-columns: 1fr; }
 }
 .cps-group-wide { grid-column: 1 / -1; }
+/* An open card fills its row's height, so two open cards side by side line up;
+   a closed card keeps its own compact height (grid default above is "start"). */
+.cps-groups > .cps-group[open] { align-self: stretch; }
 
 .cps-body { display: flex; flex-direction: column; gap: 10px; }
 .cps-note { margin: 0; color: var(--cps-muted); font-style: italic; }

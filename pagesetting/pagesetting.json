@@ -46,6 +46,15 @@
       ]
     },
     {
+      "label": "Override Autonumber",
+      "prefix": "override:",
+      "group": "display",
+      "options": [
+        ["override:yes", "yes"],
+        ["override:no", "no"]
+      ]
+    },
+    {
       "label": "Autonumber Section Headings",
       "prefix": "autonumheader:",
       "group": "display",
@@ -57,15 +66,7 @@
         ["autonumheader:yes3", "title with dash delimiters"]
       ]
     },
-    {
-      "label": "Override Autonumber",
-      "prefix": "override:",
-      "group": "display",
-      "options": [
-        ["override:yes", "yes"],
-        ["override:no", "no"]
-      ]
-    },
+   
     {
       "label": "Cover Page",
       "prefix": "coverpage:",
