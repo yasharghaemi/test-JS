@@ -147,8 +147,9 @@ loader's `BASE`; a branch URL (`@main`) is cached by jsDelivr for up to ~12 h.
   `booktranslator@`, `bookcontributor@`, `bookillustrator@`, `bookreviewedBy@`), each
   `"multiple": true` (several people, one tag each), saved straight away on the book
   page only. The group has `"layout": "table"` (`fields/peopleTable.ts`): one real
-  `<table>` (sr-only caption, Role | Person | Remove headers) with a row per person,
-  and one add row - pick a Role, search a Person; adds/removes/duplicates are
+  `<table>` (sr-only caption, Role | People headers) with one row per role that has
+  people, each person a badge (`<ul>` of chips) with its own remove button, and one
+  add row - pick a Role, search a Person; adds/removes/duplicates are
   announced. Each role still gets its own `FieldControl` (hidden placeholder node),
   so saving/summaries work unchanged; header summary `"people"` ("· 6 people").
   `fields/people.ts` (chips) remains for `multiple` fields outside a table. Single-

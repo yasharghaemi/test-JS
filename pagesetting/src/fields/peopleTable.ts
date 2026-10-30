@@ -24,7 +24,8 @@ export interface PeopleTable {
 
 /**
  * Several multi-person roles shown as one table (group "layout": "table", e.g. Book
- * attribution): a row per person (Role | Person | remove), and one add row below -
+ * attribution): a row per role (Role | People), each person a badge with its own
+ * remove button, and one add row below -
  * pick a role, search a person, and they're added. Tags are unchanged: one per
  * person, <role prefix><nameKey>. Each role still gets its own FieldControl, so the
  * panel saves, summarises and filters it like any other field.
@@ -37,11 +38,9 @@ export function peopleTable(caption: string, idBase: string): PeopleTable {
   const cap = el('caption', 'cps-sr-only', caption);
   const head = el('tr');
   const thRole = el('th', null, 'Role');
-  const thPerson = el('th', null, 'Person');
-  const thRemove = el('th', 'cps-people-remove-col');
-  thRemove.append(el('span', 'cps-sr-only', 'Remove'));
-  [thRole, thPerson, thRemove].forEach((th) => th.setAttribute('scope', 'col'));
-  head.append(thRole, thPerson, thRemove);
+  const thPeople = el('th', null, 'People');
+  [thRole, thPeople].forEach((th) => th.setAttribute('scope', 'col'));
+  head.append(thRole, thPeople);
   const thead = el('thead');
   thead.append(head);
   const tbody = el('tbody');
@@ -89,38 +88,47 @@ export function peopleTable(caption: string, idBase: string): PeopleTable {
   add.append(roleWrap, personWrap);
   node.append(table, add, announce);
 
-  // One row per person, roles in config order, people in tag order.
-  function render(focusRow?: number) {
+  // One row per role that has people (config order); each person is a badge with its
+  // own remove button, in tag order.
+  function render(focusButton?: number) {
     const rows: HTMLTableRowElement[] = [];
-    roles.forEach((role) => role.people.forEach((p) => {
-      const tr = el('tr');
-      const remove = el('button', 'cps-chip-remove', '×');
-      remove.type = 'button';
-      remove.setAttribute('aria-label', `Remove ${p.name} as ${role.field.label}`);
-      remove.addEventListener('click', () => {
-        const at = rows.indexOf(tr);
-        role.people = role.people.filter((x) => x.tag !== p.tag);
-        render(at);
-        announce.textContent = `${p.name} removed as ${role.field.label}`;
-        role.onChange();
+    const buttons: HTMLButtonElement[] = [];
+    roles.filter((role) => role.people.length).forEach((role) => {
+      const badges = el('ul', 'cps-people-badges');
+      badges.setAttribute('aria-label', role.field.label);
+      role.people.forEach((p) => {
+        const remove = el('button', 'cps-chip-remove', '×');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', `Remove ${p.name} as ${role.field.label}`);
+        const at = buttons.push(remove) - 1;
+        remove.addEventListener('click', () => {
+          role.people = role.people.filter((x) => x.tag !== p.tag);
+          render(at);
+          announce.textContent = `${p.name} removed as ${role.field.label}`;
+          role.onChange();
+        });
+        const badge = el('li', 'cps-chip');
+        badge.append(remove, el('span', 'cps-chip-text', p.name));
+        badges.append(badge);
       });
-      const cell = el('td', 'cps-people-remove-col');
-      cell.append(remove);
-      tr.append(el('td', 'cps-people-role', role.field.label), el('td', 'cps-people-name', p.name), cell);
+      const people = el('td', 'cps-people-name');
+      people.append(badges);
+      const tr = el('tr');
+      tr.append(el('td', 'cps-people-role', role.field.label), people);
       rows.push(tr);
-    }));
+    });
     if (!rows.length) {
       const empty = el('td', 'cps-people-empty', 'No one credited yet.');
-      empty.colSpan = 3;
+      empty.colSpan = 2;
       const tr = el('tr');
       tr.append(empty);
       rows.push(tr);
     }
     tbody.replaceChildren(...rows);
-    // After a removal, keep keyboard focus nearby: the next row's button, else search.
-    if (focusRow !== undefined) {
-      const buttons = tbody.querySelectorAll<HTMLButtonElement>('button');
-      (buttons[Math.min(focusRow, buttons.length - 1)] || search.input).focus();
+    // After a removal, keep keyboard focus nearby: the badge that took its place (or
+    // the one before it), else the search box.
+    if (focusButton !== undefined) {
+      (buttons.length ? buttons[Math.min(focusButton, buttons.length - 1)] : search.input).focus();
     }
   }
   render();
